@@ -2,6 +2,7 @@ package es.codeurjc.em.snake;
 
 import com.google.gson.Gson;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,13 +29,12 @@ public class SnakeHandler extends TextWebSocketHandler {
     private AtomicInteger snakeIds = new AtomicInteger(0);
 
     //private SnakeGame snakeGame = new SnakeGame();
-    
     private AtomicInteger gameIds = new AtomicInteger(0);
-    
-    private Map<Integer,SnakeGame> games = new ConcurrentHashMap<>();
+
+    private Map<Integer, SnakeGame> games = new ConcurrentHashMap<>();
 
     private static final Gson JSON = new Gson();
-    
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 
@@ -64,15 +64,15 @@ public class SnakeHandler extends TextWebSocketHandler {
 
             String payload = message.getPayload();
 
-            Message m = JSON.fromJson(payload,Message.class);
-            
+            Message m = JSON.fromJson(payload, Message.class);
+
             if (m.getMessageType().equals("ping")) {
                 return;
             }
-            
+
             Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
-            
-            if(m.getMessageType().equals("connect")){
+
+            if (m.getMessageType().equals("connect")) {
                 games.get(m.getId()).addSnake(s);
                 return;
             }
@@ -94,31 +94,48 @@ public class SnakeHandler extends TextWebSocketHandler {
         Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
 
         //snakeGame.removeSnake(s);
-
         String msg = String.format("{\"type\": \"leave\", \"id\": %d}", s.getId());
 
         //snakeGame.broadcast(msg);
     }
-    
+
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public int PostGame(@RequestBody String name){
-        int game = gameIds.getAndIncrement();
+    public int PostGame(@RequestBody String name) {
+
+        boolean exist = false;
+
+        name = name.replace("=", "");
+
+        synchronized (this) {
+            for (SnakeGame game : games.values()) {
+                exist = game.getName().equals(name);
+                if(exist)
+                    break;
+            }
         
-        games.put(game, new SnakeGame(name));
         
-        return game;
+        if (!exist) {
+
+            int game = gameIds.getAndIncrement();
+
+            games.put(game, new SnakeGame(name, game));
+            return game;
+        } else {
+            return -1;
+        }
+        }
     }
-    
+
     @GetMapping("/")
-    public List<String> GetGames(){
+    public List<String> GetGames() {
         List<String> gamesInfo = new ArrayList<>();
-        
-        for(SnakeGame game:games.values()){
-            String gameInfo = game.getName() +","+ game.getNumSnakes();
+
+        for (SnakeGame game : games.values()) {
+            String gameInfo = game.getName() + "," + game.getNumSnakes() + "," + game.getId();
             gamesInfo.add(gameInfo);
         }
-        
+
         return gamesInfo;
     }
 }
