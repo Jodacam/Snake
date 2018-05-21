@@ -1,0 +1,8 @@
+-------------------------------------------------------------------------------
+Test set: es.codeurjc.em.snake.SnakeTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 8.076 sec <<< FAILURE! - in es.codeurjc.em.snake.SnakeTest
+testJoin(es.codeurjc.em.snake.SnakeTest)  Time elapsed: 1.018 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at es.codeurjc.em.snake.SnakeTest.testJoin(SnakeTest.java:44)
+

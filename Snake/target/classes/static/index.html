@@ -1,17 +1,29 @@
 <!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
 <html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Multiplayer Snake</title>
-<link rel="stylesheet" href="style.css"></link>
-</head>
-<body>
-	<div style="float: left">
-		<canvas id="playground" width="800" height="600"></canvas>
-	</div>
-	<div id="console-container">
-		<div id="console"></div>
-	</div>
-	<script src="app.js"></script>
-</body>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div>Introduce tu nombre</div>
+        <input id="inputField" type = "text"></input>
+        <button id = "button1">Continuar</button>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script>
+            $("#button1").click(function(e){
+                var name = $("#inputField").val();
+                if(name === ""){
+                    window.alert("vacio");
+                }else{
+                    window.location = window.location.host+"/lobby.html";
+                }
+            })
+        </script>
+    </body>
 </html>

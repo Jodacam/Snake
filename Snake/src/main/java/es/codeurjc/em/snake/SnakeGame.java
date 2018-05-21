@@ -16,6 +16,12 @@ public class SnakeGame {
 
 	private ScheduledExecutorService scheduler;
 
+        private String name;
+        
+        public SnakeGame(String name){
+            this.name = name;
+        }
+        
 	public void addSnake(Snake snake) {
 
 		snakes.put(snake.getId(), snake);
@@ -85,7 +91,6 @@ public class SnakeGame {
 
 		for (Snake snake : getSnakes()) {
 			try {
-
 				System.out.println("Sending message " + message + " to " + snake.getId());
 				snake.sendMessage(message);
 
@@ -107,4 +112,12 @@ public class SnakeGame {
 			scheduler.shutdown();
 		}
 	}
+        
+        public String getName(){
+            return name;
+        }
+        
+        public int getNumSnakes(){
+            return numSnakes.get();
+        }
 }
