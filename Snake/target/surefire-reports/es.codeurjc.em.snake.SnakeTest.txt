@@ -1,8 +1,20 @@
 -------------------------------------------------------------------------------
 Test set: es.codeurjc.em.snake.SnakeTest
 -------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 8.076 sec <<< FAILURE! - in es.codeurjc.em.snake.SnakeTest
-testJoin(es.codeurjc.em.snake.SnakeTest)  Time elapsed: 1.018 sec  <<< ERROR!
-java.lang.NullPointerException: null
-	at es.codeurjc.em.snake.SnakeTest.testJoin(SnakeTest.java:44)
+Tests run: 2, Failures: 0, Errors: 2, Skipped: 0, Time elapsed: 14.075 sec <<< FAILURE! - in es.codeurjc.em.snake.SnakeTest
+testConnection(es.codeurjc.em.snake.SnakeTest)  Time elapsed: 5.044 sec  <<< ERROR!
+javax.websocket.DeploymentException: The HTTP request to initiate the WebSocket connection failed
+	at sun.nio.ch.PendingFuture.get(PendingFuture.java:197)
+	at org.apache.tomcat.websocket.WsWebSocketContainer.connectToServer(WsWebSocketContainer.java:333)
+	at org.apache.tomcat.websocket.WsWebSocketContainer.connectToServer(WsWebSocketContainer.java:150)
+	at es.codeurjc.em.snake.WebSocketClient.connect(WebSocketClient.java:64)
+	at es.codeurjc.em.snake.SnakeTest.testConnection(SnakeTest.java:21)
+
+testJoin(es.codeurjc.em.snake.SnakeTest)  Time elapsed: 5.004 sec  <<< ERROR!
+javax.websocket.DeploymentException: The HTTP request to initiate the WebSocket connection failed
+	at sun.nio.ch.PendingFuture.get(PendingFuture.java:197)
+	at org.apache.tomcat.websocket.WsWebSocketContainer.connectToServer(WsWebSocketContainer.java:333)
+	at org.apache.tomcat.websocket.WsWebSocketContainer.connectToServer(WsWebSocketContainer.java:150)
+	at es.codeurjc.em.snake.WebSocketClient.connect(WebSocketClient.java:64)
+	at es.codeurjc.em.snake.SnakeTest.testJoin(SnakeTest.java:36)
 

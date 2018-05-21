@@ -115,7 +115,7 @@ public class SnakeHandler extends TextWebSocketHandler {
         List<String> gamesInfo = new ArrayList<>();
         
         for(SnakeGame game:games.values()){
-            String gameInfo = game.getName() + game.getNumSnakes();
+            String gameInfo = game.getName() +","+ game.getNumSnakes();
             gamesInfo.add(gameInfo);
         }
         

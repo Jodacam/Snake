@@ -6,13 +6,13 @@ and open the template in the editor.
 -->
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>Inicio</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
         <div>Introduce tu nombre</div>
-        <input id="inputField" type = "text"></input>
+        <input id="inputField" type = "text"> </input>
         <button id = "button1">Continuar</button>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script>
@@ -21,7 +21,8 @@ and open the template in the editor.
                 if(name === ""){
                     window.alert("vacio");
                 }else{
-                    window.location = window.location.host+"/lobby.html";
+                    window.sessionStorage.setItem("name", name);
+                    window.location = "http://"+window.location.host+"/lobby.html";
                 }
             })
         </script>
