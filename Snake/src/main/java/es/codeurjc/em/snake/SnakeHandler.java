@@ -28,7 +28,8 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     private AtomicInteger snakeIds = new AtomicInteger(0);
 
-    //private SnakeGame snakeGame = new SnakeGame();
+    private SnakeGame snakeGame = new SnakeGame("global",0);
+    
     private AtomicInteger gameIds = new AtomicInteger(0);
 
     private Map<Integer, SnakeGame> games = new ConcurrentHashMap<>();
@@ -64,6 +65,8 @@ public class SnakeHandler extends TextWebSocketHandler {
 
             String payload = message.getPayload();
 
+            char p = payload.charAt(0);
+
             Message m = JSON.fromJson(payload, Message.class);
 
             if (m.getMessageType().equals("ping")) {
@@ -73,11 +76,37 @@ public class SnakeHandler extends TextWebSocketHandler {
             Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
 
             if (m.getMessageType().equals("connect")) {
-                games.get(m.getId()).addSnake(s);
+
+                session.getAttributes().put("gameId", m.getId());
+
+                s.setName(m.getName());
+                SnakeGame game = games.get(m.getId());
+                game.addSnake(s);
+
+                StringBuilder sb = new StringBuilder();
+                for (Snake snake : game.getSnakes()) {
+                    sb.append(String.format("{\"id\": %d, \"color\": \"%s\"}", snake.getId(), snake.getHexColor()));
+                    sb.append(',');
+                }
+                sb.deleteCharAt(sb.length() - 1);
+                String msg = String.format("{\"type\": \"join\",\"data\":[%s]}", sb.toString());
+
+                game.broadcast(msg);
                 return;
             }
 
-            Direction d = Direction.valueOf(payload.toUpperCase());
+            if (m.getMessageType().equals("chat")) {
+                SnakeGame game = games.get(m.getId());
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("{\"name\": \"%s\", \"message\": \"%s\"}", s.getName(), m.getDirection()));
+                String msg = String.format("{\"type\": \"chat\",\"data\":%s}", sb.toString());
+
+                game.broadcast(msg);
+                return;
+            }
+
+            Direction d = Direction.valueOf(m.getDirection().toUpperCase());
             s.setDirection(d);
 
         } catch (Exception e) {
@@ -93,10 +122,17 @@ public class SnakeHandler extends TextWebSocketHandler {
 
         Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
 
-        //snakeGame.removeSnake(s);
-        String msg = String.format("{\"type\": \"leave\", \"id\": %d}", s.getId());
+        if (session.getAttributes().get("gameId") != null) {
+            int id = (int) session.getAttributes().get("gameId");
 
-        //snakeGame.broadcast(msg);
+            SnakeGame game = games.get(id);
+
+            String msg = String.format("{\"type\": \"leave\", \"id\": %d}", s.getId());
+
+            game.broadcast(msg);
+        }
+        
+        snakeIds.decrementAndGet();
     }
 
     @PostMapping("/")
@@ -110,20 +146,20 @@ public class SnakeHandler extends TextWebSocketHandler {
         synchronized (this) {
             for (SnakeGame game : games.values()) {
                 exist = game.getName().equals(name);
-                if(exist)
+                if (exist) {
                     break;
+                }
             }
-        
-        
-        if (!exist) {
 
-            int game = gameIds.getAndIncrement();
+            if (!exist) {
 
-            games.put(game, new SnakeGame(name, game));
-            return game;
-        } else {
-            return -1;
-        }
+                int game = gameIds.incrementAndGet();
+
+                games.put(game, new SnakeGame(name, game));
+                return game;
+            } else {
+                return -1;
+            }
         }
     }
 
@@ -132,8 +168,10 @@ public class SnakeHandler extends TextWebSocketHandler {
         List<String> gamesInfo = new ArrayList<>();
 
         for (SnakeGame game : games.values()) {
-            String gameInfo = game.getName() + "," + game.getNumSnakes() + "," + game.getId();
-            gamesInfo.add(gameInfo);
+            if(!game.getName().equals("global")){
+                String gameInfo = game.getName() + "," + game.getNumSnakes() + "," + game.getId();
+                gamesInfo.add(gameInfo);
+            }
         }
 
         return gamesInfo;

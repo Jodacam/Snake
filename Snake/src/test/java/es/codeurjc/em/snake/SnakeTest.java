@@ -11,14 +11,14 @@ public class SnakeTest {
 
     @BeforeClass
     public static void startServer() {
-        Application.main(new String[]{"--server.port=8080"});
+        Application.main(new String[]{"--server.port=9000"});
     }
 
     @Test
     public void testConnection() throws Exception {
 
         WebSocketClient wsc = new WebSocketClient();
-        wsc.connect("ws://90.94.17.50:8080/snake");
+        wsc.connect("ws://127.0.0.1:9000/snake");
         wsc.disconnect();
     }
 
@@ -33,7 +33,7 @@ public class SnakeTest {
             firstMsg.compareAndSet(null, msg);
         });
 
-        wsc.connect("ws://90.94.17.50:8080/snake");
+        wsc.connect("ws://127.0.0.1:9000/snake");
 
         System.out.println("Connected");
 

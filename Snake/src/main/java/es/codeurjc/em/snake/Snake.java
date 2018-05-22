@@ -21,6 +21,8 @@ public class Snake {
 	private Direction direction;
 
 	private final WebSocketSession session;
+        
+        private String name;
 
 	public Snake(int id, WebSocketSession session) {
 		this.id = id;
@@ -114,4 +116,12 @@ public class Snake {
 	public String getHexColor() {
 		return this.hexColor;
 	}
+        
+        public String getName(){
+            return name;
+        }
+        
+        public void setName(String name){
+            this.name = name;
+        }
 }

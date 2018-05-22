@@ -15,7 +15,15 @@ public class Message {
 
     private Integer id;
     private String messageType;
+    private String name;
+    private String direction;
 
+    public Message(Integer id, String messageType, String name) {
+        this.id = id;
+        this.messageType = messageType;
+        this.name = name;
+    }
+    
     @Override
     public int hashCode() {
         int hash = 3;
@@ -61,8 +69,19 @@ public class Message {
         this.messageType = messageType;
     }
 
-    public Message(Integer id, String messageType) {
-        this.id = id;
-        this.messageType = messageType;
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public String getDirection() {
+        return direction;
+    }
+
+    public void setDirection(String direction) {
+        this.direction = direction;
     }
 }

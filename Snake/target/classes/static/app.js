@@ -1,6 +1,8 @@
 var Console = {};
+var Chat = {};
+var InputField;
 
-Console.log = (function(message) {
+Console.log = (function (message) {
 	var console = document.getElementById('console');
 	var p = document.createElement('p');
 	p.style.wordWrap = 'break-word';
@@ -10,6 +12,18 @@ Console.log = (function(message) {
 		console.removeChild(console.firstChild);
 	}
 	console.scrollTop = console.scrollHeight;
+});
+
+Chat.log = (function (message) {
+	var chat = document.getElementById('chat');
+	var p = document.createElement('p');
+	p.style.wordWrap = 'break-word';
+	p.innerHTML = message;
+	chat.appendChild(p);
+	while (chat.childNodes.length > 25) {
+		chat.removeChild(chat.firstChild);
+	}
+	chat.scrollTop = chat.scrollHeight;
 });
 
 let game;
@@ -32,73 +46,99 @@ class Snake {
 
 class Game {
 
-	constructor(){
-	
+	constructor() {
+
 		this.fps = 30;
 		this.socket = null;
 		this.nextFrame = null;
 		this.interval = null;
 		this.direction = 'none';
 		this.gridSize = 10;
-		
+
 		this.skipTicks = 1000 / this.fps;
 		this.nextGameTick = (new Date).getTime();
 	}
 
-	initialize() {	
-	
+	initialize() {
+
 		this.snakes = [];
 		let canvas = document.getElementById('playground');
 		if (!canvas.getContext) {
 			Console.log('Error: 2d canvas not supported by this browser.');
 			return;
 		}
-		
+
 		this.context = canvas.getContext('2d');
 		window.addEventListener('keydown', e => {
-			
+
 			var code = e.keyCode;
-			if (code > 36 && code < 41) {
+			if (code > 12 && code < 41) {
 				switch (code) {
-				case 37:
-					if (this.direction != 'east')
-						this.setDirection('west');
-					break;
-				case 38:
-					if (this.direction != 'south')
-						this.setDirection('north');
-					break;
-				case 39:
-					if (this.direction != 'west')
-						this.setDirection('east');
-					break;
-				case 40:
-					if (this.direction != 'north')
-						this.setDirection('south');
-					break;
+					case 37:
+						if (this.direction != 'east')
+							this.setDirection('west');
+						break;
+					case 38:
+						if (this.direction != 'south')
+							this.setDirection('north');
+						break;
+					case 39:
+						if (this.direction != 'west')
+							this.setDirection('east');
+						break;
+					case 40:
+						if (this.direction != 'north')
+							this.setDirection('south');
+						break;
+					case 13:
+						InputField = document.getElementById('inputField');
+
+						if (InputField.value !== "") {
+							game.socket.send(JSON.stringify({
+								id: window.sessionStorage.getItem("game"),
+								messageType: "chat",
+								name: window.sessionStorage.getItem("name"),
+								direction: InputField.value
+							}));
+						}
+
+						InputField.value = "";
 				}
 			}
 		}, false);
-		
+
 		this.connect();
 	}
 
 	setDirection(direction) {
 		this.direction = direction;
-		this.socket.send(direction);
+		this.socket.send(JSON.stringify({
+			id: window.sessionStorage.getItem("game"),
+			messageType: "other",
+			name: window.sessionStorage.getItem("name"),
+			direction: direction
+		}));
 		Console.log('Sent: Direction ' + direction);
 	}
 
 	startGameLoop() {
-	
+
+		this.socket.send(JSON.stringify({
+			id: window.sessionStorage.getItem("game"),
+			messageType: "connect",
+			name: window.sessionStorage.getItem("name"),
+			direction: null
+		}));
+
 		this.nextFrame = () => {
 			requestAnimationFrame(() => this.run());
 		}
-		
-		this.nextFrame();		
+
+		this.nextFrame();
 	}
 
 	stopGameLoop() {
+
 		this.nextFrame = null;
 		if (this.interval != null) {
 			clearInterval(this.interval);
@@ -107,7 +147,7 @@ class Game {
 
 	draw() {
 		this.context.clearRect(0, 0, 800, 600);
-		for (var id in this.snakes) {			
+		for (var id in this.snakes) {
 			this.snakes[id].draw(this.context);
 		}
 	}
@@ -130,7 +170,7 @@ class Game {
 	}
 
 	run() {
-	
+
 		while ((new Date).getTime() > this.nextGameTick) {
 			this.nextGameTick += this.skipTicks;
 		}
@@ -141,18 +181,24 @@ class Game {
 	}
 
 	connect() {
-		
-		this.socket = new WebSocket('ws://'+window.location.host+'/snake');
+
+		this.socket = new WebSocket('ws://' + window.location.host + '/snake');
 
 		this.socket.onopen = () => {
-			
+
 			// Socket open.. start the game loop.
 			Console.log('Info: WebSocket connection opened.');
 			Console.log('Info: Press an arrow key to begin.');
-			
+			Chat.log('Conected to chat');
+
 			this.startGameLoop();
-			
-			setInterval(() => this.socket.send('ping'), 5000);
+
+			setInterval(() => this.socket.send(JSON.stringify({
+				id: window.sessionStorage.getItem("game"),
+				messageType: "ping",
+				name: window.sessionStorage.getItem("name"),
+				direction: null
+			})), 5000);
 		}
 
 		this.socket.onclose = () => {
@@ -163,28 +209,31 @@ class Game {
 		this.socket.onmessage = (message) => {
 
 			var packet = JSON.parse(message.data);
-			
+
 			switch (packet.type) {
-			case 'update':
-				for (var i = 0; i < packet.data.length; i++) {
-					this.updateSnake(packet.data[i].id, packet.data[i].body);
-				}
-				break;
-			case 'join':
-				for (var j = 0; j < packet.data.length; j++) {
-					this.addSnake(packet.data[j].id, packet.data[j].color);
-				}
-				break;
-			case 'leave':
-				this.removeSnake(packet.id);
-				break;
-			case 'dead':
-				Console.log('Info: Your snake is dead, bad luck!');
-				this.direction = 'none';
-				break;
-			case 'kill':
-				Console.log('Info: Head shot!');
-				break;
+				case 'update':
+					for (var i = 0; i < packet.data.length; i++) {
+						this.updateSnake(packet.data[i].id, packet.data[i].body);
+					}
+					break;
+				case 'join':
+					for (var j = 0; j < packet.data.length; j++) {
+						this.addSnake(packet.data[j].id, packet.data[j].color);
+					}
+					break;
+				case 'leave':
+					this.removeSnake(packet.id);
+					break;
+				case 'dead':
+					Console.log('Info: Your snake is dead, bad luck!');
+					this.direction = 'none';
+					break;
+				case 'kill':
+					Console.log('Info: Head shot!');
+					break;
+				case 'chat':
+					Chat.log(packet.data.name + ": " + packet.data.message)
+					break;
 			}
 		}
 	}

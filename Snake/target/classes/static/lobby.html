@@ -23,8 +23,11 @@ and open the template in the editor.
         crossorigin="anonymous"></script>
 
     <script>
+        var socket;
         var hid = true;
         var name;
+
+        //socket = new WebSocket('ws://' + window.location.host + '/snake');
 
         function CargarPartidas(e) {
             $.ajax({
@@ -33,14 +36,19 @@ and open the template in the editor.
             })
                 .done(function (msg) {
                     let template = $("#template").html();
-                    $("#Partidas").html("");
+                    $("#games").html("");
                     for (var m of msg) {
                         let n = m.split(",");
-                        n[0] = n[0].replace("+"," ");
+                        n[0] = n[0].replace("+", " ");
                         let newTemplate = template.replace("%Name", n[0]);
                         newTemplate = newTemplate.replace("%Jugadores", n[1]);
                         newTemplate = newTemplate.replace("%Id", "'" + n[2] + "'");
-                        $("#Partidas").append(newTemplate);
+                        $("#games").append(newTemplate);
+                        $("#" + n[2]).click(function (e) {
+                            window.alert("te has unido a la partida:" + this.id)
+                            window.sessionStorage.setItem("game", this.id);
+                            window.location = "http://" + window.location.host + "/game.html";
+                        })
                     }
                 });
 
@@ -85,9 +93,9 @@ and open the template in the editor.
     </script>
 
     <div class="games">
+
         <div>
-            <h2 id="name">
-            </h2>
+            <h2 id="name"></h2>
         </div>
 
         <div>
@@ -100,18 +108,36 @@ and open the template in the editor.
             <input id="names" type="text"></input>
             <button class="myButton" id="CreaPartida">Crear</button>
         </div>
+
     </div>
+
     <hr/>
-    <h2>Games</h2>
-    <div id="Partidas">
+
+
+    <div id="console-container">
+        <h2>Games</h2>
+        <div id="games"></div>
+    </div>
+
+    <div id="console-container">
+        <h2>Chat</h2>
+        <div id="chat"></div>
+        <div>
+            MSG:
+            <input id="inputField"></input>
+        </div>
+    </div>
+
+    <div id="console-container">
+        <h2>Players</h2>
+        <div id="console"></div>
     </div>
 
     <script id="template">
         <div class="games">
             <button class="myButton" id=%Id >%Name</button>
             <h>Numero de jugadores : %Jugadores/4</h>
-        </div>
-
+        </div >
     </script>
 
 

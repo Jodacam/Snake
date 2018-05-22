@@ -95,7 +95,9 @@ public class SnakeGame {
         for (Snake snake : getSnakes()) {
             try {
                 System.out.println("Sending message " + message + " to " + snake.getId());
-                snake.sendMessage(message);
+                synchronized(this){
+                    snake.sendMessage(message);
+                }
 
             } catch (Throwable ex) {
                 System.err.println("Execption sending message to snake " + snake.getId());
