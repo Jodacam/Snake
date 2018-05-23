@@ -28,6 +28,21 @@ Chat.log = (function (message) {
 
 let game;
 
+
+
+class Fruit{
+    constructor(x,y){
+        this.color = "white";
+        this.x = x;
+        this.y = y;
+    }
+    draw(context){
+       context.fillStyle = this.color;
+			context.fillRect(this.x,this.y,
+				game.gridSize, game.gridSize); 
+    }
+}
+
 class Snake {
 
 	constructor() {
@@ -47,7 +62,7 @@ class Snake {
 class Game {
 
 	constructor() {
-
+                
 		this.fps = 30;
 		this.socket = null;
 		this.nextFrame = null;
@@ -60,7 +75,7 @@ class Game {
 	}
 
 	initialize() {
-
+                this.fruits = [];
 		this.snakes = [];
 		let canvas = document.getElementById('playground');
 		if (!canvas.getContext) {
@@ -150,6 +165,9 @@ class Game {
 		for (var id in this.snakes) {
 			this.snakes[id].draw(this.context);
 		}
+                for (var f in this.fruits){
+                    this.fruits[f].draw(this.context);
+                }
 	}
 
 	addSnake(id, color) {
@@ -215,6 +233,10 @@ class Game {
 					for (var i = 0; i < packet.data.length; i++) {
 						this.updateSnake(packet.data[i].id, packet.data[i].body);
 					}
+                                        this.fruits = new Array();
+                                        for( var j = 0; j < packet.fruits.length; j++ ){
+                                             this.fruits[j] = new Fruit(packet.fruits[j].x,packet.fruits[j].y);                              
+                                        }
 					break;
 				case 'join':
 					for (var j = 0; j < packet.data.length; j++) {

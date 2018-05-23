@@ -3,6 +3,7 @@ package es.codeurjc.em.snake;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.Iterator;
 
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -52,7 +53,7 @@ public class Snake {
 		this.session.sendMessage(new TextMessage(msg));
 	}
 
-	public synchronized void update(Collection<Snake> snakes) throws Exception {
+	public synchronized void update(Collection<Snake> snakes,Collection<Fruit> fruits) throws Exception {
 
 		Location nextLocation = this.head.getAdjacentLocation(this.direction);
 
@@ -78,6 +79,7 @@ public class Snake {
 		}
 
 		handleCollisions(snakes);
+                
 	}
 
 	private void handleCollisions(Collection<Snake> snakes) throws Exception {
@@ -96,6 +98,20 @@ public class Snake {
 			}
 		}
 	}
+        
+        
+        private void  handleFruit(Collection<Fruit> f){
+            Iterator<Fruit> iter = f.iterator();
+            while(iter.hasNext()){
+                Fruit e = iter.next();
+                if(this.head.equals(e.Position)){
+                    iter.remove();
+                    this.length++;
+                }
+            }
+            
+            
+        }
 
 	public synchronized Location getHead() {
 		return this.head;

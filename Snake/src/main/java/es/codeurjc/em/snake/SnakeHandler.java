@@ -96,8 +96,12 @@ public class SnakeHandler extends TextWebSocketHandler {
             }
 
             if (m.getMessageType().equals("chat")) {
-                SnakeGame game = games.get(m.getId());
-
+                SnakeGame game;
+                if (m.getId() > 0){
+                 game = games.get(m.getId());
+                }else{
+                game = snakeGame;
+                }
                 StringBuilder sb = new StringBuilder();
                 sb.append(String.format("{\"name\": \"%s\", \"message\": \"%s\"}", s.getName(), m.getDirection()));
                 String msg = String.format("{\"type\": \"chat\",\"data\":%s}", sb.toString());

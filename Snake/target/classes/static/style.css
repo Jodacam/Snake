@@ -4,13 +4,13 @@
 	background-color: #000;
 }
 
-#console-container {
+.console-container {
 	float: left;
 	margin-left: 15px;
 	width: 350px;
 }
 
-#console {
+.console {
 	border: 1px solid #CCCCCC;
 	border-right-color: #999999;
 	border-bottom-color: #999999;
