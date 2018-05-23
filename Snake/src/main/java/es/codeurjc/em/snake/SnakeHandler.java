@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,19 +30,19 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     private AtomicInteger snakeIds = new AtomicInteger(0);
 
-    private SnakeGame snakeGame = new SnakeGame("global",0,-1);
-    
+    private SnakeGame snakeGame = new SnakeGame("global", 0, -1);
+
     private AtomicInteger gameIds = new AtomicInteger(0);
 
     private Map<Integer, SnakeGame> games = new ConcurrentHashMap<>();
+
+    private Set<String> names = new CopyOnWriteArraySet<>();
 
     private static final Gson JSON = new Gson();
 
     public SnakeHandler() {
         games.put(gameIds.getAndIncrement(), snakeGame);
     }
-    
-    
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -103,10 +105,10 @@ public class SnakeHandler extends TextWebSocketHandler {
 
             if (m.getMessageType().equals("chat")) {
                 SnakeGame game;
-                if (m.getId() > 0){
-                 game = games.get(m.getId());
-                }else{
-                game = snakeGame;
+                if (m.getId() > 0) {
+                    game = games.get(m.getId());
+                } else {
+                    game = snakeGame;
                 }
                 StringBuilder sb = new StringBuilder();
                 sb.append(String.format("{\"name\": \"%s\", \"message\": \"%s\"}", s.getName(), m.getDirection()));
@@ -131,6 +133,8 @@ public class SnakeHandler extends TextWebSocketHandler {
         System.out.println("Connection closed. Session " + session.getId());
 
         Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
+        
+        names.remove(s.getName());
 
         if (session.getAttributes().get("gameId") != null) {
             int id = (int) session.getAttributes().get("gameId");
@@ -138,12 +142,12 @@ public class SnakeHandler extends TextWebSocketHandler {
             SnakeGame game = games.get(id);
 
             game.removeSnake(s);
-            
+
             String msg = String.format("{\"type\": \"leave\", \"id\": %d}", s.getId());
 
             game.broadcast(msg);
         }
-        
+
         //snakeIds.decrementAndGet();
     }
 
@@ -167,8 +171,37 @@ public class SnakeHandler extends TextWebSocketHandler {
 
                 int game = gameIds.getAndIncrement();
 
-                games.put(game, new SnakeGame(name, game,1));
+                games.put(game, new SnakeGame(name, game, 1));
+                
                 return game;
+            } else {
+                return -1;
+            }
+        }
+    }
+
+    @PostMapping("/names")
+    @ResponseStatus(HttpStatus.CREATED)
+    public int PostName(@RequestBody String name) {
+
+        boolean exist = false;
+
+        name = name.replace("=", "");
+
+        synchronized (this) {
+            for (String n : names) {
+                exist = n.equals(name);
+                if (exist) {
+                    break;
+                }
+            }
+
+            if (!exist) {
+
+                names.add(name);
+
+                return 1;
+                
             } else {
                 return -1;
             }
@@ -179,10 +212,12 @@ public class SnakeHandler extends TextWebSocketHandler {
     public List<String> GetGames() {
         List<String> gamesInfo = new ArrayList<>();
 
-        for (SnakeGame game : games.values()) {
-            if(!game.getName().equals("global")){
-                String gameInfo = game.getName() + "," + game.getNumSnakes() + "," + game.getId();
-                gamesInfo.add(gameInfo);
+        synchronized (this) {
+            for (SnakeGame game : games.values()) {
+                if (!game.getName().equals("global")) {
+                    String gameInfo = game.getName() + "," + game.getNumSnakes() + "," + game.getId();
+                    gamesInfo.add(gameInfo);
+                }
             }
         }
 

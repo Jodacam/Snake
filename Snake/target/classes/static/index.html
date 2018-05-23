@@ -25,8 +25,24 @@ and open the template in the editor.
                 if (name === "") {
                     window.alert("vacio");
                 } else {
-                    window.sessionStorage.setItem("name", name);
-                    window.location = "http://" + window.location.host + "/lobby.html";
+                    let n = $("#inputField").val();
+                    $.ajax({
+                        method: "POST",
+                        url: "http://" + window.location.host + "/games/names",
+                        data: n
+                    })
+                        .done(function (msg) {
+                            alert("Data Saved: " + msg);
+                            if (msg === 1) {
+                                window.sessionStorage.setItem("name", name);
+                                window.location = "http://" + window.location.host + "/lobby.html";
+                            } else {
+                                window.alert("Nombre ya en uso");
+                            }
+
+                        });
+                    //window.sessionStorage.setItem("name", name);
+                    //window.location = "http://" + window.location.host + "/lobby.html";
                 }
             }
         })

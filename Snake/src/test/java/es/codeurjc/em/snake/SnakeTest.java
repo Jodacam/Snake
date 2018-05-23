@@ -49,7 +49,7 @@ public class SnakeTest {
             
         }));
         System.out.println("Connected");
-         wsc.sendMessage(" {\"id\":0, \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null}");
+        wsc.sendMessage(" {\"id\":0, \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null}");
         
         
         Thread.sleep(1000);

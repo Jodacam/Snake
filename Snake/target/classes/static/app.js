@@ -237,7 +237,7 @@ class Game {
                                         for( var j = 0; j < packet.fruits.length; j++ ){
                                              this.fruits[j] = new Fruit(packet.fruits[j].x,packet.fruits[j].y);                              
                                         }
-                                        $("#Jugadores").html("") 
+                                        $("#Jugadores").html(""); 
                                         for(var m of packet.People){
                                             $("#Jugadores").append('<h class ="console">'+ m.nombre + ":"+m.puntos+"</h>");
                                             

@@ -70,7 +70,7 @@ and open the template in the editor.
 
         $(function () {
             socket = new WebSocket('ws://' + window.location.host + '/snake');
-            
+
             socket.onopen = () => socket.send(JSON.stringify({
                 id: 0,
                 messageType: "connect",
@@ -82,12 +82,21 @@ and open the template in the editor.
                 switch (packet.type) {
                     case 'join':
                         window.alert("Conectado");
+
                         break;
                     case 'leave':
                         this.removeSnake(packet.id);
                         break;
                     case 'chat':
                         Chat.log(packet.data.name + ": " + packet.data.message)
+                        break;
+                    case 'update':
+
+                        $("#people").html("");
+                        for (var m of packet.People) {
+                            $("#people").append('<p>' + m.nombre + "</p>");
+
+                        }
                         break;
                 }
             }
@@ -142,8 +151,8 @@ and open the template in the editor.
                     .done(function (msg) {
                         alert("Data Saved: " + msg);
                         window.sessionStorage.setItem("game", msg);
-                        window.location = "http://" + window.location.host + "/game.html";                      
-                        
+                        window.location = "http://" + window.location.host + "/game.html";
+
                     });
 
             });
@@ -183,7 +192,7 @@ and open the template in the editor.
     <div id="console-container" class="console-container">
         <h2>Chat</h2>
         <div id="chat" class="console"></div>
-        
+
         <div>
             MSG:
             <input id="inputField"></input>
@@ -192,7 +201,7 @@ and open the template in the editor.
 
     <div id="console-container" class="console-container">
         <h2>Players</h2>
-        <div id="console" class="console"></div>
+        <div id="people" class="console"></div>
     </div>
 
     <script id="template">
