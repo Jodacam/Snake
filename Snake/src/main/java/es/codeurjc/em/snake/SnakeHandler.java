@@ -36,6 +36,12 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     private static final Gson JSON = new Gson();
 
+    public SnakeHandler() {
+        games.put(gameIds.getAndIncrement(), snakeGame);
+    }
+    
+    
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 
@@ -157,7 +163,7 @@ public class SnakeHandler extends TextWebSocketHandler {
 
             if (!exist) {
 
-                int game = gameIds.incrementAndGet();
+                int game = gameIds.getAndIncrement();
 
                 games.put(game, new SnakeGame(name, game));
                 return game;

@@ -20,6 +20,7 @@ public class Snake {
 
 	private final String hexColor;
 	private Direction direction;
+        private int points;
 
 	private final WebSocketSession session;
         
@@ -43,6 +44,10 @@ public class Snake {
 		resetState();
 		sendMessage("{\"type\": \"dead\"}");
 	}
+
+    public int getPoints() {
+        return points;
+    }
 
 	private synchronized void reward() throws Exception {
 		this.length++;
@@ -79,6 +84,7 @@ public class Snake {
 		}
 
 		handleCollisions(snakes);
+                handleFruit(fruits);
                 
 	}
 
@@ -107,6 +113,7 @@ public class Snake {
                 if(this.head.equals(e.Position)){
                     iter.remove();
                     this.length++;
+                    points+=e.Points;
                 }
             }
             

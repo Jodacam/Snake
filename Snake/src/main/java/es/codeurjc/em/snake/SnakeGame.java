@@ -66,10 +66,12 @@ public class SnakeGame {
                 snake.update(getSnakes(),frutas);
             }
             
-            if (elapseTime > 10){
-                elapseTime = 0;               
+            if (elapseTime > 1000){
+                elapseTime = 0;
+                if (frutas.size() < 20){
                 Fruit f = new Fruit(200);               
                 frutas.add(f);
+                }
             }
             
             

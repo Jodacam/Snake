@@ -23,11 +23,24 @@ and open the template in the editor.
         crossorigin="anonymous"></script>
 
     <script>
+        var Chat = {};
+        var InputField;
         var socket;
         var hid = true;
         var name;
+        Chat.log = (function (message) {
+            var chat = document.getElementById('chat');
+            var p = document.createElement('p');
+            p.style.wordWrap = 'break-word';
+            p.innerHTML = message;
+            chat.appendChild(p);
+            while (chat.childNodes.length > 25) {
+                chat.removeChild(chat.firstChild);
+            }
+            chat.scrollTop = chat.scrollHeight;
+        });
 
-        //socket = new WebSocket('ws://' + window.location.host + '/snake');
+
 
         function CargarPartidas(e) {
             $.ajax({
@@ -56,6 +69,53 @@ and open the template in the editor.
 
 
         $(function () {
+            socket = new WebSocket('ws://' + window.location.host + '/snake');
+            
+            socket.onopen = () => socket.send(JSON.stringify({
+                id: 0,
+                messageType: "connect",
+                name: window.sessionStorage.getItem("name"),
+                direction: null
+            }));
+            socket.onmessage = (message) => {
+                var packet = JSON.parse(message.data);
+                switch (packet.type) {
+                    case 'join':
+                        window.alert("Conectado");
+                        break;
+                    case 'leave':
+                        this.removeSnake(packet.id);
+                        break;
+                    case 'chat':
+                        Chat.log(packet.data.name + ": " + packet.data.message)
+                        break;
+                }
+            }
+
+
+
+            $(document).keydown(e => {
+
+                var code = e.keyCode;
+                if (code > 12 && code < 41) {
+                    switch (code) {
+                        case 13:
+                            InputField = document.getElementById('inputField');
+
+                            if (InputField.value !== "") {
+                                socket.send(JSON.stringify({
+                                    id: 0,
+                                    messageType: "chat",
+                                    name: window.sessionStorage.getItem("name"),
+                                    direction: InputField.value
+                                }));
+                            }
+
+                            InputField.value = "";
+                    }
+
+                }
+            });
             name = window.sessionStorage.getItem("name");
             $("#name").html(name);
 
@@ -81,7 +141,9 @@ and open the template in the editor.
                 })
                     .done(function (msg) {
                         alert("Data Saved: " + msg);
-                        CargarPartidas(null);
+                        window.sessionStorage.setItem("game", msg);
+                        window.location = "http://" + window.location.host + "/game.html";                      
+                        
                     });
 
             });
@@ -89,7 +151,6 @@ and open the template in the editor.
             $("#Recargar").click(CargarPartidas);
 
         });
-
     </script>
 
     <div class="games">
@@ -114,23 +175,23 @@ and open the template in the editor.
     <hr/>
 
 
-    <div id="console-container" class = "console-container"> 
+    <div id="console-container" class="console-container">
         <h2>Games</h2>
-        <div id="games" class = "console"></div>
+        <div id="games" class="console"></div>
     </div>
 
-    <div id="console-container" class = "console-container">
+    <div id="console-container" class="console-container">
         <h2>Chat</h2>
-        <div id="chat" class = "console"></div>
+        <div id="chat" class="console"></div>
         <div>
             MSG:
             <input id="inputField"></input>
         </div>
     </div>
 
-    <div id="console-container" class = "console-container">
+    <div id="console-container" class="console-container">
         <h2>Players</h2>
-        <div id="console" class = "console"></div>
+        <div id="console" class="console"></div>
     </div>
 
     <script id="template">
