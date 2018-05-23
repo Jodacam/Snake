@@ -1,8 +1,12 @@
 package es.codeurjc.em.snake;
 
+import java.io.IOException;
 import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.websocket.Session;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,8 +39,19 @@ public class SnakeTest {
 
         wsc.connect("ws://127.0.0.1:9000/snake");
 
+        wsc.onOpen(((session) -> {            
+            try {
+                wsc.sendMessage(" \"id\":0, \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null");
+            } catch (IOException ex) {
+                Logger.getLogger(SnakeTest.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            
+        }));
         System.out.println("Connected");
-
+         wsc.sendMessage(" {\"id\":0, \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null}");
+        
+        
         Thread.sleep(1000);
 
         String msg = firstMsg.get();

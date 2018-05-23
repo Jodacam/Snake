@@ -28,7 +28,7 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     private AtomicInteger snakeIds = new AtomicInteger(0);
 
-    private SnakeGame snakeGame = new SnakeGame("global",0);
+    private SnakeGame snakeGame = new SnakeGame("global",0,-1);
     
     private AtomicInteger gameIds = new AtomicInteger(0);
 
@@ -84,7 +84,7 @@ public class SnakeHandler extends TextWebSocketHandler {
             if (m.getMessageType().equals("connect")) {
 
                 session.getAttributes().put("gameId", m.getId());
-
+                System.out.print("Hola");
                 s.setName(m.getName());
                 SnakeGame game = games.get(m.getId());
                 game.addSnake(s);
@@ -137,12 +137,14 @@ public class SnakeHandler extends TextWebSocketHandler {
 
             SnakeGame game = games.get(id);
 
+            game.removeSnake(s);
+            
             String msg = String.format("{\"type\": \"leave\", \"id\": %d}", s.getId());
 
             game.broadcast(msg);
         }
         
-        snakeIds.decrementAndGet();
+        //snakeIds.decrementAndGet();
     }
 
     @PostMapping("/")
@@ -165,7 +167,7 @@ public class SnakeHandler extends TextWebSocketHandler {
 
                 int game = gameIds.getAndIncrement();
 
-                games.put(game, new SnakeGame(name, game));
+                games.put(game, new SnakeGame(name, game,1));
                 return game;
             } else {
                 return -1;

@@ -19,14 +19,16 @@ public class SnakeGame {
     private List<Fruit> frutas = new ArrayList<Fruit>();
     private long elapseTime = 0;
     private ScheduledExecutorService scheduler;
+    private int jugadoresMinimos = 0;
 
     private String name;
 
     private int id;
 
-    public SnakeGame(String name, int id) {
+    public SnakeGame(String name, int id,int Jugadores) {
         this.name = name;
         this.id = id;
+        jugadoresMinimos = Jugadores;
     }
 
     public void addSnake(Snake snake) {
@@ -36,7 +38,7 @@ public class SnakeGame {
         }
         int count = numSnakes.getAndIncrement();
 
-        if (count == 0) {
+        if (count == 0 && jugadoresMinimos > 0) {
             startTimer();
         }
     }
@@ -47,11 +49,12 @@ public class SnakeGame {
 
     public void removeSnake(Snake snake) {
         synchronized (this) {
+            System.out.print("Serpiente Borrada en partida" + this.getName());
             snakes.remove(Integer.valueOf(snake.getId()));
         }
         int count = numSnakes.decrementAndGet();
 
-        if (count == 0) {
+        if (count == 0 && jugadoresMinimos > 0) {
             stopTimer();
         }
     }
@@ -72,9 +75,13 @@ public class SnakeGame {
                     frutas.add(f);
                 }
             }
-
+            StringBuilder name = new StringBuilder();
+            
             StringBuilder sb = new StringBuilder();
             for (Snake snake : getSnakes()) {
+                name.append("{\"nombre\": \""+snake.getName()+"\",");
+                name.append("\"puntos\": "+snake.getPoints()+"},");
+                
                 sb.append(getLocationsJson(snake));
                 sb.append(',');
             }
@@ -84,9 +91,10 @@ public class SnakeGame {
                 f.append(",");
             }
 
+            name.deleteCharAt(name.length() - 1);
             sb.deleteCharAt(sb.length() - 1);
             f.deleteCharAt(f.length() - 1);
-            String msg = String.format("{\"type\": \"update\", \"data\" : [%s] , \"fruits\" : [%s] }", sb.toString(), f.toString());
+            String msg = String.format("{\"type\": \"update\", \"data\" : [%s] , \"fruits\" : [%s], \"People\":[%s] }", sb.toString(), f.toString(),name.toString());
 
             broadcast(msg);
 
@@ -112,10 +120,12 @@ public class SnakeGame {
     }
 
     public void broadcast(String message) throws Exception {
-        synchronized (this) {
+        
             for (Snake snake : getSnakes()) {
+               
+                synchronized(snake){
                 try {
-                    System.out.println("Sending message " + message + " to " + snake.getId());
+                    //System.out.println("Sending message " + message + " to " + snake.getId());
 
                     snake.sendMessage(message);
 
@@ -125,7 +135,8 @@ public class SnakeGame {
                     removeSnake(snake);
                 }
             }
-        }
+         }
+        
     }
 
     public void startTimer() {
