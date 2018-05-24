@@ -90,7 +90,8 @@ public class SnakeGame {
             StringBuilder sb = new StringBuilder();
             for (Snake snake : getSnakes()) {
                 name.append("{\"nombre\": \""+snake.getName()+"\",");
-                name.append("\"puntos\": "+snake.getPoints()+"},");
+                name.append("\"puntos\": "+snake.getPoints()+",");
+                name.append("\"color\": \""+snake.getHexColor()+"\"},");
                 
                 sb.append(getLocationsJson(snake));
                 sb.append(',');

@@ -157,14 +157,14 @@ public class SnakeHandler extends TextWebSocketHandler {
                 
                 game.removeSnake(s);
                 
-                if (game.getNumSnakes() != 0 && !game.getName().equals("global")) {
+                if (game.getNumSnakes() != 0 || game.getName().equals("global")) {
                     
                     String msg = String.format("{\"type\": \"leave\", \"id\": %d}", s.getId());
                     
                     game.broadcast(msg);
                     
                 } else {
-                    games.remove(game);
+                    games.remove(id);
                 }
             } finally {
                 InOut.unlock();

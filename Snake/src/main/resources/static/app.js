@@ -239,7 +239,7 @@ class Game {
                                         }
                                         $("#Jugadores").html(""); 
                                         for(var m of packet.People){
-                                            $("#Jugadores").append('<h class ="console">'+ m.nombre + ":"+m.puntos+"</h>");
+                                            $("#Jugadores").append('<h  class ="console" style="background:'+m.color+';">'+ m.nombre + ":"+m.puntos+"</h>");
                                             
                                         }
 					break;
