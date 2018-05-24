@@ -6,237 +6,99 @@ and open the template in the editor.
 -->
 <html>
 
-    <head>
-        <title>LOBBY</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
+<head>
+    <title>LOBBY</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
 
-    <body>
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB"
-              crossorigin="anonymous">
-        <link rel="stylesheet" href="style.css"></link>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+<body>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css"></link>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
         crossorigin="anonymous"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
         crossorigin="anonymous"></script>
 
-        <script>
-            var Chat = {};
-            var InputField;
-            var socket;
-            var hid = true;
-            var name;
-            Chat.log = (function (message) {
-                var chat = document.getElementById('chat');
-                var p = document.createElement('p');
-                p.style.wordWrap = 'break-word';
-                p.innerHTML = message;
-                chat.appendChild(p);
-                while (chat.childNodes.length > 25) {
-                    chat.removeChild(chat.firstChild);
-                }
-                chat.scrollTop = chat.scrollHeight;
-            });
+    <script src="lobby.js"></script>
 
+    <div class="games">
 
+        <div>
+            <h2 id="name"></h2>
+        </div>
 
-            function CargarPartidas(e) {
-                $.ajax({
-                    method: "GET",
-                    url: "http://" + window.location.host + "/games/"
-                })
-                        .done(function (msg) {
-                            let template = $("#template").html();
-                            $("#games").html("");
-                            for (var m of msg) {
-                                let n = m.split(",");
-                                n[0] = n[0].replace("+", " ");
-                                let newTemplate = template.replace("%Name", n[0]);
-                                newTemplate = newTemplate.replace("%Jugadores", n[1] + "/" + n[5]);
-                                newTemplate = newTemplate.replace("%Id", "'" + n[2] + "'");
-                                newTemplate = newTemplate.replace("%Dificultad", n[3]);
-                                $("#games").append(newTemplate);
-                                $("#" + n[2]).click(function (e) {
-                                    window.alert("te has unido a la partida:" + this.id)
-                                    window.sessionStorage.setItem("game", this.id);
-                                    window.location = "http://" + window.location.host + "/game.html";
-                                })
-                            }
-                        });
+        <div>
+            <button class="myButton" id="Crear">Create Game</button>
+            <button class="myButton" id="UnirseAletorio">Find Game</button>
+            <button class="myButton" id="Recargar">Refresh Games</button>
+        </div>
 
-            }
-
-
-            $(function () {
-                socket = new WebSocket('ws://' + window.location.host + '/snake');
-
-                socket.onopen = () => socket.send(JSON.stringify({
-                        id: 0,
-                        messageType: "connect",
-                        name: window.sessionStorage.getItem("name"),
-                        direction: null
-                    }));
-                socket.onmessage = (message) => {
-                    var packet = JSON.parse(message.data);
-                    switch (packet.type) {
-                        case 'join':
-                            window.alert("Conectado");
-
-                            break;
-                        case 'leave':
-                            this.removeSnake(packet.id);
-                            break;
-                        case 'chat':
-                            Chat.log(packet.data.name + ": " + packet.data.message)
-                            break;
-                        case 'update':
-
-                            $("#people").html("");
-                            for (var m of packet.People) {
-                                $("#people").append('<p>' + m.nombre + "</p>");
-                            }
-                            break;
-                    }
-                }
-
-
-
-                $(document).keydown(e => {
-
-                    var code = e.keyCode;
-                    if (code > 12 && code < 41) {
-                        switch (code) {
-                            case 13:
-                                InputField = document.getElementById('inputField');
-
-                                if (InputField.value !== "") {
-                                    socket.send(JSON.stringify({
-                                        id: 0,
-                                        messageType: "chat",
-                                        name: window.sessionStorage.getItem("name"),
-                                        direction: InputField.value
-                                    }));
-                                }
-
-                                InputField.value = "";
-                        }
-
-                    }
-                });
-                name = window.sessionStorage.getItem("name");
-                $("#name").html(name);
-
-                CargarPartidas(null);
-
-                $("#Inputs").hide();
-                $("#Crear").click(function (e) {
-                    if (hid) {
-                        $("#Inputs").show();
-                        hid = !hid;
-                    } else {
-                        $("#Inputs").hide();
-                        hid = !hid;
-                    }
-                });
-                $("#CreaPartida").click(function (e) {
-                    let n = {name: $("#names").val(),
-                        dificultad: level,
-                        Tipo: tipo,
-                        jugadores: $("#Jugadores").val()
-                    };
-
-                    $.ajax({
-                        method: "POST",
-                        url: "http://" + window.location.host + "/games/",
-                        data: JSON.stringify(n),
-                        contentType: "application/json"
-                    })
-                            .done(function (msg) {
-                                alert("Data Saved: " + msg);
-                                window.sessionStorage.setItem("game", msg);
-                                window.location = "http://" + window.location.host + "/game.html";
-
-                            });
-
-                });
-
-                $("#Recargar").click(CargarPartidas);
-
-            });
-            var level = "Facil";
-            $(document).on('click', '.level', function (e) {
-
-                var thisCheck = $(this);
-                level = thisCheck.val();
-
-                if (thisCheck.is(":checked")) {
-                    thisCheck.parent().parent().find(".level").prop('checked', false);
-                    
-                }
-                    thisCheck.prop('checked', true);
-            });
-
-
-            var tipo = "Arcade";
-            $(document).on('click', '.Tipe', function (e) {
-
-                var thisCheck = $(this);
-                tipo = thisCheck.val();
-
-                if (thisCheck.is(":checked")) {
-                    thisCheck.parent().parent().find(".Tipe").prop('checked', false);
-                    thisCheck.prop('checked', true);
-                }
-
-            });
-
-
-
-        </script>
-
-        <div class="games">
+        <div class="games" id="Inputs">
+            <h2>Difficulty</h2>
+            <hr/>
 
             <div>
-                <h2 id="name"></h2>
+                <div style="width:200px;">
+                    <label class="container">
+                        <input type="checkbox" class="level" value="Facil" checked>
+                        <span class="checkmark"></span>Facil</label>
+                </div>
+                <div style="width:200px;">
+                    <label class="container">
+                        <input type="checkbox" class="level" value="Normal">
+                        <span class="checkmark"></span>Normal</label>
+                </div>
+                <div style="width:200px;">
+                    <label class="container">
+                        <input type="checkbox" class="level" value="Dificil">
+                        <span class="checkmark"></span>Dificil</label>
+                </div>
             </div>
+
+            <h2>GameMode</h2>
+            <hr/>
 
             <div>
-                <button class="myButton" id="Crear">Crear Partida</button>
-                <button class="myButton" id="UnirseAletorio">Buscame Partida</button>
-                <button class="myButton" id="Recargar">Recargar</button>
+                <div style="width:200px;">
+                    <label class="container">
+                        <input type="checkbox" class="Tipe" value="Arcade" checked>
+                        <span class="checkmark"></span>Arcade</label>
+                </div>
+                <div style="width:200px;">
+                    <label class="container">
+                        <input type="checkbox" class="Tipe" value="Ilimitado">
+                        <span class="checkmark"></span>Ilimitado</label>
+                </div>
             </div>
 
-            <div class="games" id="Inputs" >
-                <div>
-                    <label class = "container"   ><input type="checkbox" class="level" value="Facil" checked><span class="checkmark"></span>Facil</label>
-                    <label class = "container" ><input type="checkbox" class="level" value="Normal"><span class="checkmark"></span>Normal</label>
-                    <label class = "container"><input type="checkbox" class="level" value="Dificil"><span class="checkmark"></span>Dificil</label>
-                </div>
+            <h2>Player Number</h2>
+            <hr/>
 
-
-                <div style="display: block">
-                    <label><input type="checkbox" class="Tipe" value="Arcade" checked>Arcade</label>
-                    <label><input type="checkbox" class="Tipe" value="Ilimitado">Ilimitado</label>            
-                </div>
-
-                <div>
-                    <select id ="Jugadores">
-                        <option value=2>2 Jugadores</option>
-                        <option value=3>3 Jugadores</option>
-                        <option value=4>4 Jugadores</option>
-                        <option value=5>5 Jugadores</option>
-                    </select>
-                </div>
-                <input id="names" type="text">
-                <button class="myButton" id="CreaPartida">Crear</button>
+            <div style="width:200px; margin-bottom: 10px;">
+                <select id="Jugadores">
+                    <option value=2>2 Jugadores</option>
+                    <option value=3>3 Jugadores</option>
+                    <option value=4>4 Jugadores</option>
+                    <option value=5>5 Jugadores</option>
+                </select>
             </div>
+
+            <h2>Game Name</h2>
+            <hr/>
+
+            <input id="names" type="text"></input>
+            <button class="myButton" id="CreaPartida">Crear</button>
+
+
+
+
 
         </div>
 
         <hr/>
-
 
         <div id="console-container" class="console-container">
             <h2>Games</h2>
@@ -259,14 +121,14 @@ and open the template in the editor.
         </div>
 
         <script id="template">
-                            <div class="games">
-                        <button class="myButton" id=%Id >%Name</button>
-            <h>Numero de jugadores : %Jugadores</h>
-        <h>%Dificultad</h>           
+            <div class="games">
+                <button class="myButton" id=%Id >%Name</button>
+                <h>Numero de jugadores : %Jugadores</h>
+                <h>%Dificultad</h>           
         </div >
         </script>
 
 
-    </body>
+</body>
 
 </html>

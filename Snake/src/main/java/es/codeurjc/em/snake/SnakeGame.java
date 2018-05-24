@@ -27,6 +27,8 @@ public class SnakeGame {
     private String name;
 
     private int id;
+    
+    private boolean started = false;
 
     public SnakeGame(GameType g, int id) {
         this.name = g.getName();
@@ -41,10 +43,12 @@ public class SnakeGame {
         synchronized (this) {
             snakes.put(snake.getId(), snake);
         }
+        
         int count = numSnakes.getAndIncrement();
 
-        if (count == jugadoresMinimos-1 && Tipo != Type.Lobby) {
+        if (count == jugadoresMinimos-1 && Tipo != Type.Lobby && !started) {
             startTimer();
+            started = true;
         }
     }
 
@@ -59,8 +63,9 @@ public class SnakeGame {
         }
         int count = numSnakes.decrementAndGet();
 
-        if (count == 0 && jugadoresMinimos > 0) {
+        if (count == 0) {
             stopTimer();
+            started = false;
         }
     }
 
