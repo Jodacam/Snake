@@ -261,6 +261,19 @@ class Game {
 				case 'chat':
 					Chat.log(packet.data.name + ": " + packet.data.message)
 					break;
+                                case 'endGame':
+                                      for(var m of packet.data) {
+                                          if (m.id === window.sessionStorage.getItem("name")){
+                                              if(m.win){
+                                                  alert("HAS GANADO JODER");
+                                              }else{
+                                                  alert("HAS PERDIDO");
+                                              }
+                                              window.location = "http://" + window.location.host + "/lobby.html";
+                                          }
+                                          
+                                      }
+                                      break;
 			}
 		}
 	}

@@ -108,6 +108,36 @@ public class SnakeGame {
             String msg = String.format("{\"type\": \"update\", \"data\" : [%s] , \"fruits\" : [%s], \"People\":[%s] }", sb.toString(), f.toString(),name.toString());
 
             broadcast(msg);
+            
+            switch(Tipo){
+                case Arcade:
+                    StringBuilder s = new StringBuilder();
+                   
+                    boolean ganada = false;
+                    for(Snake snake : getSnakes()){
+                        if(snake.getTail().size() > 10){
+                            s.append("{\"id\": \"" + snake.getName() +"\",  \"win\": true");  
+                            s.append("},");
+                            ganada = true;                           
+                        }
+                        else{
+                         s.append("{\"id\":\""+snake.getName()+"\",  \"win\": false"); 
+                         s.append("},");
+                        }
+                    }
+                    if(ganada){
+                        s.deleteCharAt(s.length() - 1);
+                        String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
+                        broadcast(Win);                       
+                    }
+                    
+                    break;
+                case Unlimited:
+                    
+                    break;
+            }
+            
+            
 
         } catch (Throwable ex) {
             System.err.println("Exception processing tick()");

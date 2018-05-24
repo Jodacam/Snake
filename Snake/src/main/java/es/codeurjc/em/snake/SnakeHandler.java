@@ -94,7 +94,7 @@ public class SnakeHandler extends TextWebSocketHandler {
 
                 InOut.lock();
                 SnakeGame game = games.get(m.getId());
-                if (game.getNumSnakes() < game.getJugadoresMinimos() || game.getName().equals("global")) {
+                if (game != null && (game.getNumSnakes() < game.getJugadoresMinimos() || game.getName().equals("global"))) {
                     game.addSnake(s);
                     InOut.unlock();
 
