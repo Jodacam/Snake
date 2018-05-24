@@ -30,7 +30,7 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     private AtomicInteger snakeIds = new AtomicInteger(0);
 
-    private SnakeGame snakeGame = new SnakeGame("global", 0, -1);
+    private SnakeGame snakeGame = new SnakeGame(new GameType("global", GameType.Dificultad.Dificil, GameType.Type.Lobby,-1), 0);
 
     private AtomicInteger gameIds = new AtomicInteger(0);
 
@@ -153,15 +153,16 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public int PostGame(@RequestBody String name) {
+    public int PostGame(@RequestBody String tstring) {
 
+        GameType t = JSON.fromJson(tstring, GameType.class);
         boolean exist = false;
 
-        name = name.replace("=", "");
+        t.setName(t.getName().replace("=", ""));
 
         synchronized (this) {
             for (SnakeGame game : games.values()) {
-                exist = game.getName().equals(name);
+                exist = game.getName().equals(t.getName());
                 if (exist) {
                     break;
                 }
@@ -171,7 +172,7 @@ public class SnakeHandler extends TextWebSocketHandler {
 
                 int game = gameIds.getAndIncrement();
 
-                games.put(game, new SnakeGame(name, game, 1));
+                games.put(game, new SnakeGame(t, game));
                 
                 return game;
             } else {
@@ -215,7 +216,7 @@ public class SnakeHandler extends TextWebSocketHandler {
         synchronized (this) {
             for (SnakeGame game : games.values()) {
                 if (!game.getName().equals("global")) {
-                    String gameInfo = game.getName() + "," + game.getNumSnakes() + "," + game.getId();
+                    String gameInfo = game.getName() + "," + game.getNumSnakes() + "," + game.getId() +","+game.getDificultad() + ","+ game.getTipo()+ ","+ game.getJugadoresMinimos();
                     gamesInfo.add(gameInfo);
                 }
             }

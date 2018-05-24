@@ -1,5 +1,6 @@
 package es.codeurjc.em.snake;
 
+import es.codeurjc.em.snake.GameType.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -20,15 +21,19 @@ public class SnakeGame {
     private long elapseTime = 0;
     private ScheduledExecutorService scheduler;
     private int jugadoresMinimos = 0;
+    private GameType.Dificultad dificultad;
+    private Type Tipo;
 
     private String name;
 
     private int id;
 
-    public SnakeGame(String name, int id,int Jugadores) {
-        this.name = name;
-        this.id = id;
-        jugadoresMinimos = Jugadores;
+    public SnakeGame(GameType g, int id) {
+        this.name = g.getName();
+        this.id = id;        
+        this.dificultad = g.getDificultad();
+        this.Tipo = g.getTipo();
+        this.jugadoresMinimos = g.getJudores();
     }
 
     public void addSnake(Snake snake) {
@@ -38,7 +43,7 @@ public class SnakeGame {
         }
         int count = numSnakes.getAndIncrement();
 
-        if (count == 0 && jugadoresMinimos > 0) {
+        if (count == jugadoresMinimos-1 && Tipo != Type.Lobby) {
             startTimer();
         }
     }
@@ -68,7 +73,7 @@ public class SnakeGame {
                 snake.update(getSnakes(), frutas);
             }
 
-            if (elapseTime > 1000) {
+            if (elapseTime > 10000) {
                 elapseTime = 0;
                 if (frutas.size() < 20) {
                     Fruit f = new Fruit(200);
@@ -141,7 +146,22 @@ public class SnakeGame {
 
     public void startTimer() {
         scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(() -> tick(), TICK_DELAY, TICK_DELAY, TimeUnit.MILLISECONDS);
+        long updateRate = 0;
+        switch(dificultad){
+            case Facil:
+                updateRate = TICK_DELAY;
+                break;
+            case Normal:
+                updateRate = TICK_DELAY/2;
+                break;
+            case Dificil:
+                updateRate = TICK_DELAY/3;
+                break;
+        }
+        
+        
+        
+        scheduler.scheduleAtFixedRate(() -> tick(), TICK_DELAY, updateRate, TimeUnit.MILLISECONDS);
     }
 
     public void stopTimer() {
@@ -161,4 +181,19 @@ public class SnakeGame {
     public int getId() {
         return id;
     }
+
+    public int getJugadoresMinimos() {
+        return jugadoresMinimos;
+    }
+
+    public GameType.Dificultad getDificultad() {
+        return dificultad;
+    }
+
+    public Type getTipo() {
+        return Tipo;
+    }
+    
+    
+    
 }
