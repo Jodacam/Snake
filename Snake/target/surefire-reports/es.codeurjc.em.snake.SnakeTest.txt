@@ -1,4 +1,11 @@
 -------------------------------------------------------------------------------
 Test set: es.codeurjc.em.snake.SnakeTest
 -------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.549 sec - in es.codeurjc.em.snake.SnakeTest
+Tests run: 3, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 6.886 sec <<< FAILURE! - in es.codeurjc.em.snake.SnakeTest
+testCreateGame(es.codeurjc.em.snake.SnakeTest)  Time elapsed: 0.862 sec  <<< ERROR!
+java.lang.NumberFormatException: For input string: "{"timestamp":1527262831968,"status":500,"error":"Internal Server Error","exception":"com.google.gson.JsonSyntaxException","message":"java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $","path":"/games/"}"
+	at java.lang.NumberFormatException.forInputString(NumberFormatException.java:65)
+	at java.lang.Integer.parseInt(Integer.java:580)
+	at java.lang.Integer.parseInt(Integer.java:615)
+	at es.codeurjc.em.snake.SnakeTest.testCreateGame(SnakeTest.java:82)
+

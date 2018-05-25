@@ -52,10 +52,11 @@ public class SnakeTest {
                 wsc.sendMessage(" \"id\":0, \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null");
             } catch (IOException ex) {
                 Logger.getLogger(SnakeTest.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-            
+            }           
         }));
+        
+        
+        
         System.out.println("Connected");
         wsc.sendMessage(" {\"id\":0, \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null}");
         
@@ -81,6 +82,7 @@ public class SnakeTest {
         int Partida =Integer.parseInt(  request.getBody());
         
         assertTrue("El id de partida tiene que ser mayor a 1", Partida > 0);
+        
         WebSocketClient wsc = new WebSocketClient();
         
         wsc.onMessage((session, msg) -> {

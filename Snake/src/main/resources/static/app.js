@@ -73,7 +73,20 @@ class Game {
 	}
 
 	initialize() {
-                this.fruits = [];
+		let starter = window.sessionStorage.getItem("Starter");
+		if (starter === "false"){
+			$("#Comenzar").hide();
+		}else{
+			$("#Comenzar").click(function(e){
+				game.socket.send(JSON.stringify({
+				id: window.sessionStorage.getItem("game"),
+				messageType: "Start",
+				name: window.sessionStorage.getItem("name"),
+				direction: null}));
+				$("#Comenzar").hide();
+			});
+		}
+        this.fruits = [];
 		this.snakes = [];
 		let canvas = document.getElementById('playground');
 		if (!canvas.getContext) {
@@ -83,7 +96,7 @@ class Game {
 
 		this.context = canvas.getContext('2d');
 		window.addEventListener('keydown', e => {
-
+			e.preventDefault();
 			var code = e.keyCode;
 			if (code > 12 && code < 41) {
 				switch (code) {
@@ -251,6 +264,7 @@ class Game {
 					break;
 				case 'leave':
 					this.removeSnake(packet.id);
+					Console.log("Un jugador ha dejado la partida");
 					break;
 				case 'dead':
 					Console.log('Info: Your snake is dead, bad luck!');

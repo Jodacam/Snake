@@ -4,7 +4,7 @@ var InputField;
 var socket;
 var hid = true;
 var name;
-
+var Puntuaciones ={};
 Chat.log = (function (message) {
     var chat = document.getElementById('chat');
     var p = document.createElement('p');
@@ -23,6 +23,16 @@ Players.log = (function (message) {
     p.style.wordWrap = 'break-word';
     p.innerHTML = message.name;
     p.id = message.id;
+    player.appendChild(p);
+    player.scrollTop = player.scrollHeight;
+});
+
+
+Puntuaciones.log = (function (message) {
+    var player = document.getElementById('points');
+    var p = document.createElement('p');
+    p.style.wordWrap = 'break-word';
+    p.innerHTML = message;  
     player.appendChild(p);
     player.scrollTop = player.scrollHeight;
 });
@@ -55,6 +65,7 @@ function CargarPartidas(e) {
 
 
 $(function () {
+    window.sessionStorage.setItem("Starter",false);
     socket = new WebSocket('ws://' + window.location.host + '/snake');
 
     socket.onopen = () => socket.send(JSON.stringify({
@@ -66,8 +77,7 @@ $(function () {
     socket.onmessage = (message) => {
         var packet = JSON.parse(message.data);
         switch (packet.type) {
-            case 'join':
-                window.alert("Conectado");
+            case 'join':               
                 var player = document.getElementById('people');
                 player.innerHTML = "";
                 for (var j = 0; j < packet.data.length; j++) {
@@ -137,7 +147,7 @@ $(function () {
             contentType: "application/json"
         })
             .done(function (msg) {
-                alert("Data Saved: " + msg);
+                window.sessionStorage.setItem("Starter",true);             
                 window.sessionStorage.setItem("game", msg);
                 window.location = "http://" + window.location.host + "/game.html";
 
@@ -146,6 +156,39 @@ $(function () {
     });
 
     $("#Recargar").click(CargarPartidas);
+     window.setInterval(CargarPartidas, 200);
+     $("#UnirseAletorio").click(function(e){
+        $.ajax({
+            method: "GET",
+            url: "http://" + window.location.host + "/games/Random",          
+        })
+            .done(function (msg) {
+                if (msg >= 1){               
+                window.sessionStorage.setItem("game", msg);
+                window.location = "http://" + window.location.host + "/game.html";
+                }else{
+                    RealGame = Math.abs(msg+1);
+                }
+            });
+
+
+        });
+
+        window.setInterval(function(){
+              $.ajax({
+            method: "GET",
+            url: "http://" + window.location.host + "/games/Puntuaciones",          
+        })
+            .done(function (msg) {
+                $("#points").html("");
+                for (var m of msg){
+                    Puntuaciones.log(m);
+                }
+            });
+
+
+
+        }, 200);
 
 });
 var level = "Facil";

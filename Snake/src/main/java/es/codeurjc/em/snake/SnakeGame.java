@@ -23,14 +23,15 @@ public class SnakeGame {
     private int jugadoresMinimos = 0;
     private GameType.Dificultad dificultad;
     private Type Tipo;
-
+    private long Tiempo;
     private String name;
 
-    private int id;
+    private  volatile int id;
     
-    private boolean started = false;
+    private  volatile boolean started = false;
 
     public SnakeGame(GameType g, int id) {
+        Tiempo = 0;
         this.name = g.getName();
         this.id = id;        
         this.dificultad = g.getDificultad();
@@ -48,8 +49,12 @@ public class SnakeGame {
 
         if (count == jugadoresMinimos-1 && Tipo != Type.Lobby && !started) {
             startTimer();
-            started = true;
+           
         }
+    }
+
+    public boolean isStarted() {
+        return started;
     }
 
     public Collection<Snake> getSnakes() {
@@ -65,13 +70,16 @@ public class SnakeGame {
 
         if (count == 0) {
             stopTimer();
-            started = false;
+            
         }
     }
 
     private void tick() {
 
         try {
+           
+            
+            Tiempo += updateRate;
             elapseTime += System.currentTimeMillis();
 
             for (Snake snake : getSnakes()) {
@@ -118,7 +126,16 @@ public class SnakeGame {
                         if(snake.getTail().size() > 10){
                             s.append("{\"id\": \"" + snake.getName() +"\",  \"win\": true");  
                             s.append("},");
-                            ganada = true;                           
+                            ganada = true;
+                            Long previLong = SnakeHandler.Puntuaciones.putIfAbsent(snake.getName(), Tiempo);
+                           
+                            if (null != previLong ){
+                                if (previLong > Tiempo){
+                                    SnakeHandler.Puntuaciones.put(snake.getName(), Tiempo);
+                                }
+                            }
+                                    
+                            
                         }
                         else{
                          s.append("{\"id\":\""+snake.getName()+"\",  \"win\": false"); 
@@ -163,27 +180,23 @@ public class SnakeGame {
 
     public void broadcast(String message) throws Exception {
         
-            for (Snake snake : getSnakes()) {
-               
-                synchronized(snake){
+            for (Snake snake : getSnakes()) {                               
                 try {
                     //System.out.println("Sending message " + message + " to " + snake.getId());
-
                     snake.sendMessage(message);
-
                 } catch (Throwable ex) {
                     System.err.println("Execption sending message to snake " + snake.getId());
                     ex.printStackTrace(System.err);
                     removeSnake(snake);
                 }
-            }
+            
          }
         
     }
-
+    volatile long  updateRate = 0;
     public void startTimer() {
         scheduler = Executors.newScheduledThreadPool(1);
-        long updateRate = 0;
+        
         switch(dificultad){
             case Facil:
                 updateRate = TICK_DELAY;
@@ -199,11 +212,14 @@ public class SnakeGame {
         
         
         scheduler.scheduleAtFixedRate(() -> tick(), TICK_DELAY, updateRate, TimeUnit.MILLISECONDS);
+        started = true;
     }
 
     public void stopTimer() {
         if (scheduler != null) {
             scheduler.shutdown();
+            started = false;
+            
         }
     }
 

@@ -3,10 +3,13 @@ package es.codeurjc.em.snake;
 import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -43,6 +46,10 @@ public class SnakeHandler extends TextWebSocketHandler {
     private static final Gson JSON = new Gson();
 
     private ReentrantReadWriteLock InOut = new ReentrantReadWriteLock();
+    
+    public static Map<String,Long> Puntuaciones = new ConcurrentHashMap<>();
+    
+    
 
     public SnakeHandler() {
         games.put(gameIds.getAndIncrement(), snakeGame);
@@ -88,7 +95,6 @@ public class SnakeHandler extends TextWebSocketHandler {
             Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
 
             if (m.getMessageType().equals("connect")) {
-
                 session.getAttributes().put("gameId", m.getId());
                 System.out.print("Hola");
                 s.setName(m.getName());
@@ -116,7 +122,6 @@ public class SnakeHandler extends TextWebSocketHandler {
                     return;
                 }
             }
-
             if (m.getMessageType().equals("chat")) {
                 SnakeGame game;
                 if (m.getId() > 0) {
@@ -131,7 +136,15 @@ public class SnakeHandler extends TextWebSocketHandler {
                 game.broadcast(msg);
                 return;
             }
-
+            
+            if(m.getMessageType().equals("Start")){
+                SnakeGame game;
+                game = games.get(m.getId());
+                if (game.getNumSnakes()>1)
+                    game.startTimer();
+                return;
+            }
+            
             Direction d = Direction.valueOf(m.getDirection().toUpperCase());
             s.setDirection(d);
 
@@ -152,12 +165,11 @@ public class SnakeHandler extends TextWebSocketHandler {
 
         if (session.getAttributes().get("gameId") != null) {
             int id = (int) session.getAttributes().get("gameId");
-            InOut.writeLock().lock();
-            try {
+            
                 SnakeGame game = games.get(id);
-
                 game.removeSnake(s);
-
+                InOut.writeLock().lock();
+            try {
                 synchronized (game) {
                     if (game.getNumSnakes() != 0 || game.getName().equals("global")) {
 
@@ -241,7 +253,7 @@ public class SnakeHandler extends TextWebSocketHandler {
         List<String> gamesInfo = new ArrayList<>();
 
         for (SnakeGame game : games.values()) {
-            if (!game.getName().equals("global")) {
+            if (!game.getName().equals("global") && !game.isStarted()) {
                 String gameInfo = game.getName() + "," + game.getNumSnakes() + "," + game.getId() + "," + game.getDificultad() + "," + game.getTipo() + "," + game.getJugadoresMinimos();
                 gamesInfo.add(gameInfo);
             }
@@ -249,4 +261,31 @@ public class SnakeHandler extends TextWebSocketHandler {
 
         return gamesInfo;
     }
+    
+    @GetMapping("/Random")
+    public int GetRandomGame(){
+        int number = -1;
+        Collection<SnakeGame> ActualGames = games.values();
+        List<SnakeGame> list = new ArrayList<SnakeGame>( ActualGames );
+        list.remove(0);
+        list.sort((p1,  p2) -> p1.getNumSnakes() - p2.getNumSnakes());                     
+        if (list.get(0).getNumSnakes() != list.get(0).getJugadoresMinimos()){
+            number = list.get(0).getId();
+        }else{
+            number -=list.get(0).getId();
+        }
+        return number;
+    }
+    
+     @GetMapping("/Puntuaciones")
+     public List<String> GetPuntuaciones(){        
+         List<String> list = new LinkedList<>();
+         
+         for (String name : Puntuaciones.keySet()){
+             list.add(name+":"+Puntuaciones.get(name));             
+         }        
+         list.sort((p1,p2)-> Integer.parseInt(p1.split(":")[1]) - Integer.parseInt(p2.split(":")[1]));
+         return list;
+     }
+    
 }
