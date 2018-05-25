@@ -187,8 +187,8 @@ $(function () {
                 if (msg >= 1) {
                     window.sessionStorage.setItem("game", msg);
                     window.location = "http://" + window.location.host + "/game.html";
-                } else {
-                    RealGame = Math.abs(msg + 1);
+                } else{
+                    alert("No hay ninguna partida");
                 }
             });
 

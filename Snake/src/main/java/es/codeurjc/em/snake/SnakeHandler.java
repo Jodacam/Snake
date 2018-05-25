@@ -95,16 +95,17 @@ public class SnakeHandler extends TextWebSocketHandler {
             Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
 
             if (m.getMessageType().equals("connect")) {
-                session.getAttributes().put("gameId", m.getId());
-                System.out.print("Hola");
+               
+                session.getAttributes().put("Thread", Thread.currentThread());
+                
                 s.setName(m.getName());
-
                 InOut.readLock().lock();
                 SnakeGame game = games.get(m.getId());
-                if (game != null && (game.getNumSnakes() < game.getJugadoresMinimos() || game.getName().equals("global"))) {
+                if (game != null) {
+                   try{ 
                     game.addSnake(s);
                     InOut.readLock().unlock();
-
+                    session.getAttributes().put("gameId", m.getId());
                     StringBuilder sb = new StringBuilder();
                     for (Snake snake : game.getSnakes()) {
                         sb.append(String.format("{\"id\": %d, \"color\": \"%s\", \"name\":\"%s\"}", snake.getId(), snake.getHexColor(), snake.getName()));
@@ -112,12 +113,19 @@ public class SnakeHandler extends TextWebSocketHandler {
                     }
                     sb.deleteCharAt(sb.length() - 1);
                     String msg = String.format("{\"type\": \"join\",\"data\":[%s]}", sb.toString());
-
                     game.broadcast(msg);
                     return;
+                    
+                    
+                   } catch(InterruptedException e){
+                    InOut.readLock().unlock();
+                    String failed = String.format("{\"type\": \"failed-join\",\"data\":\"You couldn't connect to game %d\"}", m.getId());
+                    session.sendMessage(new TextMessage(failed));
+                    return;
+                   }
                 } else {
                     InOut.readLock().unlock();
-                    String failed = String.format("{\"type\": \"´failed-join\",\"data\":\"You couldn't connect to game %d\"}", m.getId());
+                    String failed = String.format("{\"type\": \"failed-join\",\"data\":\"You couldn't connect to game %d\"}", m.getId());
                     session.sendMessage(new TextMessage(failed));
                     return;
                 }
@@ -145,10 +153,17 @@ public class SnakeHandler extends TextWebSocketHandler {
                 return;
             }
             
+            if(m.getMessageType().equals("Disconnect")){
+                Thread t = (Thread)session.getAttributes().get("Thread");
+                t.interrupt();
+                return;
+            }
+            
             Direction d = Direction.valueOf(m.getDirection().toUpperCase());
             s.setDirection(d);
 
         } catch (Exception e) {
+            InOut.readLock().unlock();
             System.err.println("Exception processing message " + message.getPayload());
             e.printStackTrace(System.err);
         }
@@ -171,7 +186,7 @@ public class SnakeHandler extends TextWebSocketHandler {
                 InOut.writeLock().lock();
             try {
                 synchronized (game) {
-                    if (game.getNumSnakes() != 0 || game.getName().equals("global")) {
+                    if (game.getNumSnakes() > 0 || game.getName().equals("global")) {
 
                         String msg = String.format("{\"type\": \"leave\", \"id\": %d}", s.getId());
 
@@ -253,7 +268,7 @@ public class SnakeHandler extends TextWebSocketHandler {
         List<String> gamesInfo = new ArrayList<>();
 
         for (SnakeGame game : games.values()) {
-            if (!game.getName().equals("global") && !game.isStarted()) {
+            if (!game.getName().equals("global")) {
                 String gameInfo = game.getName() + "," + game.getNumSnakes() + "," + game.getId() + "," + game.getDificultad() + "," + game.getTipo() + "," + game.getJugadoresMinimos();
                 gamesInfo.add(gameInfo);
             }

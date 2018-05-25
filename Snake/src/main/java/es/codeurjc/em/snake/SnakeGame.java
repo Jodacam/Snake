@@ -5,11 +5,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.lang.InterruptedException;
+
 
 public class SnakeGame {
 
@@ -25,6 +29,9 @@ public class SnakeGame {
     private Type Tipo;
     private long Tiempo;
     private String name;
+    
+    private BlockingQueue<Integer> Huecos; 
+    
 
     private  volatile int id;
     
@@ -37,10 +44,20 @@ public class SnakeGame {
         this.dificultad = g.getDificultad();
         this.Tipo = g.getTipo();
         this.jugadoresMinimos = g.getJudores();
+        Huecos = new LinkedBlockingDeque<>();
+        for (int i = 0;i <jugadoresMinimos; i++){
+            Huecos.add(i);
+        }
     }
 
-    public void addSnake(Snake snake) {
+    public void addSnake(Snake snake) throws InterruptedException {
 
+        if (Tipo != Type.Lobby){
+            Integer i = Huecos.poll(5, TimeUnit.SECONDS);
+            if (i == null){
+                throw new InterruptedException();
+            }
+        }                  
         synchronized (snake) {
             snakes.put(snake.getId(), snake);
         }
@@ -61,13 +78,18 @@ public class SnakeGame {
         return snakes.values();
     }
 
-    public void removeSnake(Snake snake) {
+    public void removeSnake(Snake snake) throws InterruptedException {
+
         synchronized (snake) {
             System.out.print("Serpiente Borrada en partida" + this.getName());
             snakes.remove(Integer.valueOf(snake.getId()));
         }
         int count = numSnakes.decrementAndGet();
-
+        
+        if (Tipo != Type.Lobby){
+            Huecos.put(0);
+        }
+        
         if (count == 0) {
             stopTimer();
             

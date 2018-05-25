@@ -263,6 +263,7 @@ class Game {
 					for (var j = 0; j < packet.data.length; j++) {
 						Console.log(packet.data[j].name + " has joined the game");
 					}
+					$("#over").hide();
 					break;
 				case 'leave':
 					this.removeSnake(packet.id);
@@ -290,6 +291,10 @@ class Game {
 						}
 
 					}
+					break;
+				case 'failed-join':
+					alert("A LA MIERDA");
+					window.location = "http://" + window.location.host + "/lobby.html";
 					break;
 			}
 		}
