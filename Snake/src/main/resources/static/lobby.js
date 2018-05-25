@@ -4,6 +4,7 @@ var InputField;
 var socket;
 var hid = true;
 var name;
+
 Chat.log = (function (message) {
     var chat = document.getElementById('chat');
     var p = document.createElement('p');
@@ -20,7 +21,8 @@ Players.log = (function (message) {
     var player = document.getElementById('people');
     var p = document.createElement('p');
     p.style.wordWrap = 'break-word';
-    p.innerHTML = message;
+    p.innerHTML = message.name;
+    p.id = message.id;
     player.appendChild(p);
     player.scrollTop = player.scrollHeight;
 });
@@ -69,11 +71,11 @@ $(function () {
                 var player = document.getElementById('people');
                 player.innerHTML = "";
                 for (var j = 0; j < packet.data.length; j++) {
-                    Players.log(packet.data[j].name);
+                    Players.log(packet.data[j]);
                 }
                 break;
             case 'leave':
-                this.removeSnake(packet.id);
+                $("#"+packet.id).remove();
                 break;
             case 'chat':
                 Chat.log(packet.data.name + ": " + packet.data.message)

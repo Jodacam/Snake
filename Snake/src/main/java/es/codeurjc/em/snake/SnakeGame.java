@@ -40,7 +40,7 @@ public class SnakeGame {
 
     public void addSnake(Snake snake) {
 
-        synchronized (this) {
+        synchronized (snake) {
             snakes.put(snake.getId(), snake);
         }
         
@@ -57,7 +57,7 @@ public class SnakeGame {
     }
 
     public void removeSnake(Snake snake) {
-        synchronized (this) {
+        synchronized (snake) {
             System.out.print("Serpiente Borrada en partida" + this.getName());
             snakes.remove(Integer.valueOf(snake.getId()));
         }
@@ -128,7 +128,8 @@ public class SnakeGame {
                     if(ganada){
                         s.deleteCharAt(s.length() - 1);
                         String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
-                        broadcast(Win);                       
+                        broadcast(Win); 
+                        stopTimer();
                     }
                     
                     break;

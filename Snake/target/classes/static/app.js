@@ -28,8 +28,6 @@ Chat.log = (function (message) {
 
 let game;
 
-
-
 class Fruit{
     constructor(x,y){
         this.color = "white";
@@ -246,6 +244,9 @@ class Game {
 				case 'join':
 					for (var j = 0; j < packet.data.length; j++) {
 						this.addSnake(packet.data[j].id, packet.data[j].color);
+					}
+					for (var j = 0; j < packet.data.length; j++) {
+						Console.log(packet.data[j].name+" has joined the game");
 					}
 					break;
 				case 'leave':
