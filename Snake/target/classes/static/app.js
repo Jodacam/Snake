@@ -266,9 +266,9 @@ class Game {
                                       for(var m of packet.data) {
                                           if (m.id === window.sessionStorage.getItem("name")){
                                               if(m.win){
-                                                  alert("HAS GANADO JODER");
+                                                  alert("YOU WIN");
                                               }else{
-                                                  alert("HAS PERDIDO");
+                                                  alert("YOU LOSE");
                                               }
                                               window.location = "http://" + window.location.host + "/lobby.html";
                                           }
