@@ -78,7 +78,10 @@ public class SnakeTest {
         AtomicReference<String> firstMsg = new AtomicReference<String>();
 
                 
-        HttpResponse<String> request = Unirest.post("http://127.0.0.1:9000/games/").body("nombrePrueba").asString();
+        HttpResponse<String> request = Unirest.post("http://127.0.0.1:9000/games/").body(" {\"name\":\"Prueba1\",\n" +
+"            \"dificultad\": \"Normal\",\n" +
+"            \"Tipo\": \"Arcade\",\n" +
+"            \"jugadores\": 2}").asString();
         int Partida =Integer.parseInt(  request.getBody());
         
         assertTrue("El id de partida tiene que ser mayor a 1", Partida > 0);
