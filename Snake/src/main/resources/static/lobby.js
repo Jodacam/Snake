@@ -4,7 +4,7 @@ var InputField;
 var socket;
 var hid = true;
 var name;
-var Puntuaciones ={};
+var Puntuaciones = {};
 Chat.log = (function (message) {
     var chat = document.getElementById('chat');
     var p = document.createElement('p');
@@ -32,7 +32,7 @@ Puntuaciones.log = (function (message) {
     var player = document.getElementById('points');
     var p = document.createElement('p');
     p.style.wordWrap = 'break-word';
-    p.innerHTML = message;  
+    p.innerHTML = message;
     player.appendChild(p);
     player.scrollTop = player.scrollHeight;
 });
@@ -52,6 +52,13 @@ function CargarPartidas(e) {
                 newTemplate = newTemplate.replace("%Jugadores", n[1] + "/" + n[5]);
                 newTemplate = newTemplate.replace("%Id", "'" + n[2] + "'");
                 newTemplate = newTemplate.replace("%Dificultad", n[3]);
+                if(n[3]==="Dificil"){
+                    newTemplate = newTemplate.replace("white", "lightcoral");
+                }else if(n[3]==="Normal"){
+                    newTemplate = newTemplate.replace("white", "lightgreen");
+                }else if(n[3]==="Facil"){
+                    newTemplate = newTemplate.replace("white", "lightblue");
+                }
                 $("#games").append(newTemplate);
                 $("#" + n[2]).click(function (e) {
                     window.alert("te has unido a la partida:" + this.id)
@@ -65,7 +72,7 @@ function CargarPartidas(e) {
 
 
 $(function () {
-    window.sessionStorage.setItem("Starter",false);
+    window.sessionStorage.setItem("Starter", false);
     socket = new WebSocket('ws://' + window.location.host + '/snake');
 
     socket.onopen = () => socket.send(JSON.stringify({
@@ -77,7 +84,7 @@ $(function () {
     socket.onmessage = (message) => {
         var packet = JSON.parse(message.data);
         switch (packet.type) {
-            case 'join':               
+            case 'join':
                 var player = document.getElementById('people');
                 player.innerHTML = "";
                 for (var j = 0; j < packet.data.length; j++) {
@@ -85,7 +92,7 @@ $(function () {
                 }
                 break;
             case 'leave':
-                $("#"+packet.id).remove();
+                $("#" + packet.id).remove();
                 break;
             case 'chat':
                 Chat.log(packet.data.name + ": " + packet.data.message)
@@ -97,26 +104,40 @@ $(function () {
 
     $(document).keydown(e => {
 
-        var code = e.keyCode;
-        if (code > 12 && code < 41) {
-            switch (code) {
-                case 13:
-                    InputField = document.getElementById('inputField');
+        if (e.keyCode === 13) {
 
-                    if (InputField.value !== "") {
-                        socket.send(JSON.stringify({
-                            id: 0,
-                            messageType: "chat",
-                            name: window.sessionStorage.getItem("name"),
-                            direction: InputField.value
-                        }));
-                    }
+            InputField = document.getElementById('inputField');
 
-                    InputField.value = "";
+            if (InputField.value !== "") {
+                socket.send(JSON.stringify({
+                    id: 0,
+                    messageType: "chat",
+                    name: window.sessionStorage.getItem("name"),
+                    direction: InputField.value
+                }));
             }
+
+            InputField.value = "";
+
 
         }
     });
+
+    $("#Send").click(function () {
+        InputField = document.getElementById('inputField');
+
+        if (InputField.value !== "") {
+            socket.send(JSON.stringify({
+                id: 0,
+                messageType: "chat",
+                name: window.sessionStorage.getItem("name"),
+                direction: InputField.value
+            }));
+        }
+
+        InputField.value = "";
+    })
+
     name = window.sessionStorage.getItem("name");
     $("#name").html(name);
 
@@ -147,7 +168,7 @@ $(function () {
             contentType: "application/json"
         })
             .done(function (msg) {
-                window.sessionStorage.setItem("Starter",true);             
+                window.sessionStorage.setItem("Starter", true);
                 window.sessionStorage.setItem("game", msg);
                 window.location = "http://" + window.location.host + "/game.html";
 
@@ -156,39 +177,39 @@ $(function () {
     });
 
     $("#Recargar").click(CargarPartidas);
-     window.setInterval(CargarPartidas, 200);
-     $("#UnirseAletorio").click(function(e){
+    window.setInterval(CargarPartidas, 200);
+    $("#UnirseAletorio").click(function (e) {
         $.ajax({
             method: "GET",
-            url: "http://" + window.location.host + "/games/Random",          
+            url: "http://" + window.location.host + "/games/Random",
         })
             .done(function (msg) {
-                if (msg >= 1){               
-                window.sessionStorage.setItem("game", msg);
-                window.location = "http://" + window.location.host + "/game.html";
-                }else{
-                    RealGame = Math.abs(msg+1);
+                if (msg >= 1) {
+                    window.sessionStorage.setItem("game", msg);
+                    window.location = "http://" + window.location.host + "/game.html";
+                } else {
+                    RealGame = Math.abs(msg + 1);
                 }
             });
 
 
-        });
+    });
 
-        window.setInterval(function(){
-              $.ajax({
+    window.setInterval(function () {
+        $.ajax({
             method: "GET",
-            url: "http://" + window.location.host + "/games/Puntuaciones",          
+            url: "http://" + window.location.host + "/games/Puntuaciones",
         })
             .done(function (msg) {
                 $("#points").html("");
-                for (var m of msg){
+                for (var m of msg) {
                     Puntuaciones.log(m);
                 }
             });
 
 
 
-        }, 200);
+    }, 200);
 
 });
 var level = "Facil";

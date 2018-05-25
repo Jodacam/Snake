@@ -28,17 +28,17 @@ Chat.log = (function (message) {
 
 let game;
 
-class Fruit{
-    constructor(x,y){
-        this.color = "white";
-        this.x = x;
-        this.y = y;
-    }
-    draw(context){
-       context.fillStyle = this.color;
-			context.fillRect(this.x,this.y,
-				game.gridSize, game.gridSize); 
-    }
+class Fruit {
+	constructor(x, y) {
+		this.color = "white";
+		this.x = x;
+		this.y = y;
+	}
+	draw(context) {
+		context.fillStyle = this.color;
+		context.fillRect(this.x, this.y,
+			game.gridSize, game.gridSize);
+	}
 }
 
 class Snake {
@@ -60,7 +60,7 @@ class Snake {
 class Game {
 
 	constructor() {
-                
+
 		this.fps = 30;
 		this.socket = null;
 		this.nextFrame = null;
@@ -74,19 +74,20 @@ class Game {
 
 	initialize() {
 		let starter = window.sessionStorage.getItem("Starter");
-		if (starter === "false"){
+		if (starter === "false") {
 			$("#Comenzar").hide();
-		}else{
-			$("#Comenzar").click(function(e){
+		} else {
+			$("#Comenzar").click(function (e) {
 				game.socket.send(JSON.stringify({
-				id: window.sessionStorage.getItem("game"),
-				messageType: "Start",
-				name: window.sessionStorage.getItem("name"),
-				direction: null}));
+					id: window.sessionStorage.getItem("game"),
+					messageType: "Start",
+					name: window.sessionStorage.getItem("name"),
+					direction: null
+				}));
 				$("#Comenzar").hide();
 			});
 		}
-        this.fruits = [];
+		this.fruits = [];
 		this.snakes = [];
 		let canvas = document.getElementById('playground');
 		if (!canvas.getContext) {
@@ -176,9 +177,9 @@ class Game {
 		for (var id in this.snakes) {
 			this.snakes[id].draw(this.context);
 		}
-                for (var f in this.fruits){
-                    this.fruits[f].draw(this.context);
-                }
+		for (var f in this.fruits) {
+			this.fruits[f].draw(this.context);
+		}
 	}
 
 	addSnake(id, color) {
@@ -241,25 +242,26 @@ class Game {
 
 			switch (packet.type) {
 				case 'update':
+					$("#Comenzar").hide();
 					for (var i = 0; i < packet.data.length; i++) {
 						this.updateSnake(packet.data[i].id, packet.data[i].body);
 					}
-                                        this.fruits = new Array();
-                                        for( var j = 0; j < packet.fruits.length; j++ ){
-                                             this.fruits[j] = new Fruit(packet.fruits[j].x,packet.fruits[j].y);                              
-                                        }
-                                        $("#Jugadores").html(""); 
-                                        for(var m of packet.People){
-                                            $("#Jugadores").append('<h  class ="console" style="background:'+m.color+';">'+ m.nombre + ":"+m.puntos+"</h>");
-                                            
-                                        }
+					this.fruits = new Array();
+					for (var j = 0; j < packet.fruits.length; j++) {
+						this.fruits[j] = new Fruit(packet.fruits[j].x, packet.fruits[j].y);
+					}
+					$("#Jugadores").html("");
+					for (var m of packet.People) {
+						$("#Jugadores").append('<h  class ="console" style="background:' + m.color + ';">' + m.nombre + ":" + m.puntos + "</h>");
+
+					}
 					break;
 				case 'join':
 					for (var j = 0; j < packet.data.length; j++) {
 						this.addSnake(packet.data[j].id, packet.data[j].color);
 					}
 					for (var j = 0; j < packet.data.length; j++) {
-						Console.log(packet.data[j].name+" has joined the game");
+						Console.log(packet.data[j].name + " has joined the game");
 					}
 					break;
 				case 'leave':
@@ -276,19 +278,19 @@ class Game {
 				case 'chat':
 					Chat.log(packet.data.name + ": " + packet.data.message)
 					break;
-                                case 'endGame':
-                                      for(var m of packet.data) {
-                                          if (m.id === window.sessionStorage.getItem("name")){
-                                              if(m.win){
-                                                  alert("YOU WIN");
-                                              }else{
-                                                  alert("YOU LOSE");
-                                              }
-                                              window.location = "http://" + window.location.host + "/lobby.html";
-                                          }
-                                          
-                                      }
-                                      break;
+				case 'endGame':
+					for (var m of packet.data) {
+						if (m.id === window.sessionStorage.getItem("name")) {
+							if (m.win) {
+								alert("YOU WIN");
+							} else {
+								alert("YOU LOSE");
+							}
+							window.location = "http://" + window.location.host + "/lobby.html";
+						}
+
+					}
+					break;
 			}
 		}
 	}
