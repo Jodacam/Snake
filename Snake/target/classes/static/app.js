@@ -255,6 +255,8 @@ class Game {
 						$("#Jugadores").append('<h  class ="console" style="background:' + m.color + ';">' + m.nombre + ":" + m.puntos + "</h>");
 
 					}
+                                        var time = packet.Tiempo;
+                                        $("#time").html("<p>"+time+"</p>");
 					break;
 				case 'join':
 					for (var j = 0; j < packet.data.length; j++) {

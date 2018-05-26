@@ -24,6 +24,7 @@ public class GameType {
     public enum Type{
         Lobby,
         Arcade,
+        Classic,
         Unlimited
     }
     

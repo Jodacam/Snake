@@ -1,6 +1,7 @@
 package es.codeurjc.em.snake;
 
 import com.google.gson.Gson;
+import es.codeurjc.em.snake.GameType.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,6 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,11 +49,13 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     private ReentrantReadWriteLock InOut = new ReentrantReadWriteLock();
     
-    public static Map<String,Long> Puntuaciones = new ConcurrentHashMap<>();
+    public static Map<Type,ConcurrentHashMap<String,Long>> Puntuaciones = new ConcurrentHashMap<>();
     
     
 
     public SnakeHandler() {
+        Puntuaciones.put(Type.Arcade, new ConcurrentHashMap<>());
+        Puntuaciones.put(Type.Classic, new ConcurrentHashMap<>());
         games.put(gameIds.getAndIncrement(), snakeGame);
     }
 
@@ -292,12 +296,16 @@ public class SnakeHandler extends TextWebSocketHandler {
         return number;
     }
     
-     @GetMapping("/Puntuaciones")
-     public List<String> GetPuntuaciones(){        
+     @GetMapping("/Puntuaciones/{tipo}")
+     public List<String> GetPuntuaciones(@PathVariable Type tipo){        
          List<String> list = new LinkedList<>();
          
-         for (String name : Puntuaciones.keySet()){
-             list.add(name+":"+Puntuaciones.get(name));             
+         for (String name : Puntuaciones.get(tipo).keySet()){
+             list.add(name+":"+Puntuaciones.get(tipo).get(name));             
+         }  
+         
+         switch(tipo){
+             
          }        
          list.sort((p1,p2)-> Integer.parseInt(p1.split(":")[1]) - Integer.parseInt(p2.split(":")[1]));
          return list;

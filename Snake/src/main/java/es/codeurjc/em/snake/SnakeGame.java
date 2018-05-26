@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.lang.InterruptedException;
 
-
 public class SnakeGame {
 
     private final static long TICK_DELAY = 100;
@@ -29,44 +28,43 @@ public class SnakeGame {
     private Type Tipo;
     private long Tiempo;
     private String name;
-    
-    private BlockingQueue<Integer> Huecos; 
-    
 
-    private  volatile int id;
-    
-    private  volatile boolean started = false;
+    private BlockingQueue<Integer> Huecos;
+
+    private volatile int id;
+
+    private volatile boolean started = false;
 
     public SnakeGame(GameType g, int id) {
         Tiempo = 0;
         this.name = g.getName();
-        this.id = id;        
+        this.id = id;
         this.dificultad = g.getDificultad();
         this.Tipo = g.getTipo();
         this.jugadoresMinimos = g.getJudores();
         Huecos = new LinkedBlockingDeque<>();
-        for (int i = 0;i <jugadoresMinimos; i++){
+        for (int i = 0; i < jugadoresMinimos; i++) {
             Huecos.add(i);
         }
     }
 
     public void addSnake(Snake snake) throws InterruptedException {
 
-        if (Tipo != Type.Lobby){
+        if (Tipo != Type.Lobby) {
             Integer i = Huecos.poll(5, TimeUnit.SECONDS);
-            if (i == null){
+            if (i == null) {
                 throw new InterruptedException();
             }
-        }                  
+        }
         synchronized (snake) {
             snakes.put(snake.getId(), snake);
         }
-        
+
         int count = numSnakes.getAndIncrement();
 
-        if (count == jugadoresMinimos-1 && Tipo != Type.Lobby && !started) {
+        if (count == jugadoresMinimos - 1 && Tipo != Type.Lobby && !started) {
             startTimer();
-           
+
         }
     }
 
@@ -85,22 +83,21 @@ public class SnakeGame {
             snakes.remove(Integer.valueOf(snake.getId()));
         }
         int count = numSnakes.decrementAndGet();
-        
-        if (Tipo != Type.Lobby){
+
+        if (Tipo != Type.Lobby) {
             Huecos.put(0);
         }
-        
+
         if (count == 0) {
             stopTimer();
-            
+
         }
     }
 
     private void tick() {
 
         try {
-           
-            
+
             Tiempo += updateRate;
             elapseTime += System.currentTimeMillis();
 
@@ -116,13 +113,13 @@ public class SnakeGame {
                 }
             }
             StringBuilder name = new StringBuilder();
-            
+
             StringBuilder sb = new StringBuilder();
             for (Snake snake : getSnakes()) {
-                name.append("{\"nombre\": \""+snake.getName()+"\",");
-                name.append("\"puntos\": "+snake.getPoints()+",");
-                name.append("\"color\": \""+snake.getHexColor()+"\"},");
-                
+                name.append("{\"nombre\": \"" + snake.getName() + "\",");
+                name.append("\"puntos\": " + snake.getPoints() + ",");
+                name.append("\"color\": \"" + snake.getHexColor() + "\"},");
+
                 sb.append(getLocationsJson(snake));
                 sb.append(',');
             }
@@ -131,53 +128,91 @@ public class SnakeGame {
                 f.append(String.format("{\"x\": %d, \"y\": %d}", fruit.getPosition().x, fruit.getPosition().y));
                 f.append(",");
             }
-
+            long Time = 0;
+            switch(Tipo){
+                case Classic:
+                    Time = 60000 - Tiempo;
+                    break;
+                default:
+                    Time = Tiempo;
+                    break;
+            }
             name.deleteCharAt(name.length() - 1);
             sb.deleteCharAt(sb.length() - 1);
             f.deleteCharAt(f.length() - 1);
-            String msg = String.format("{\"type\": \"update\", \"data\" : [%s] , \"fruits\" : [%s], \"People\":[%s] }", sb.toString(), f.toString(),name.toString());
+            String msg = String.format("{\"type\": \"update\", \"data\" : [%s] , \"fruits\" : [%s], \"People\":[%s],\"Tiempo\":%d }", sb.toString(), f.toString(), name.toString(),Time);
 
             broadcast(msg);
-            
-            switch(Tipo){
+            StringBuilder s = new StringBuilder();
+            boolean ganada = false;
+            switch (Tipo) {
                 case Arcade:
-                    StringBuilder s = new StringBuilder();
-                   
-                    boolean ganada = false;
-                    for(Snake snake : getSnakes()){
-                        if(snake.getTail().size() > 10){
-                            s.append("{\"id\": \"" + snake.getName() +"\",  \"win\": true");  
+
+                    for (Snake snake : getSnakes()) {
+                        if (snake.getTail().size() > 10) {
+                            s.append("{\"id\": \"" + snake.getName() + "\",  \"win\": true");
                             s.append("},");
                             ganada = true;
-                            Long previLong = SnakeHandler.Puntuaciones.putIfAbsent(snake.getName(), Tiempo);
-                           
-                            if (null != previLong ){
-                                if (previLong > Tiempo){
-                                    SnakeHandler.Puntuaciones.put(snake.getName(), Tiempo);
+                            Long previLong = SnakeHandler.Puntuaciones.get(Tipo).putIfAbsent(snake.getName(), Tiempo);
+
+                            if (null != previLong) {
+                                if (previLong > Tiempo) {
+                                    SnakeHandler.Puntuaciones.get(Tipo).put(snake.getName(), Tiempo);
                                 }
                             }
-                                    
-                            
-                        }
-                        else{
-                         s.append("{\"id\":\""+snake.getName()+"\",  \"win\": false"); 
-                         s.append("},");
+
+                        } else {
+                            s.append("{\"id\":\"" + snake.getName() + "\",  \"win\": false");
+                            s.append("},");
                         }
                     }
-                    if(ganada){
+                    if (ganada) {
                         s.deleteCharAt(s.length() - 1);
                         String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
-                        broadcast(Win); 
+                        broadcast(Win);
                         stopTimer();
                     }
-                    
+
                     break;
                 case Unlimited:
-                    
+
+                    break;
+                case Classic:
+                    if (Tiempo > 60 * 1000) {
+                        System.out.println("Terminada");
+                        List<Snake> list = new ArrayList<>(getSnakes());
+                        list.sort((p1, p2) -> p2.getPoints() - p1.getPoints());
+                        for (int i = 0; i < list.size(); i++) {
+                            Snake snake = list.get(i);
+
+                            if (i == 0) {
+                                s.append("{\"id\": \"" + snake.getName() + "\",  \"win\": true");
+                                s.append("},");
+                                ganada = true;
+
+                            } else {
+                                s.append("{\"id\":\"" + snake.getName() + "\",  \"win\": false");
+                                s.append("},");
+                            }
+                            Long previLong = SnakeHandler.Puntuaciones.get(Tipo).putIfAbsent(snake.getName(), (long) snake.getPoints());
+
+                            if (null != previLong) {
+                                if (previLong < (long) snake.getPoints()) {
+                                    SnakeHandler.Puntuaciones.get(Tipo).put(snake.getName(), (long) snake.getPoints());
+                                }
+                            }
+
+                        }
+                        if (ganada) {
+                            s.deleteCharAt(s.length() - 1);
+                            String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
+                            broadcast(Win);
+                            stopTimer();
+                        }
+                    }
+
                     break;
             }
-            
-            
 
         } catch (Throwable ex) {
             System.err.println("Exception processing tick()");
@@ -201,38 +236,37 @@ public class SnakeGame {
     }
 
     public void broadcast(String message) throws Exception {
-        
-            for (Snake snake : getSnakes()) {                               
-                try {
-                    //System.out.println("Sending message " + message + " to " + snake.getId());
-                    snake.sendMessage(message);
-                } catch (Throwable ex) {
-                    System.err.println("Execption sending message to snake " + snake.getId());
-                    ex.printStackTrace(System.err);
-                    removeSnake(snake);
-                }
-            
-         }
-        
+
+        for (Snake snake : getSnakes()) {
+            try {
+                //System.out.println("Sending message " + message + " to " + snake.getId());
+                snake.sendMessage(message);
+            } catch (Throwable ex) {
+                System.err.println("Execption sending message to snake " + snake.getId());
+                ex.printStackTrace(System.err);
+                removeSnake(snake);
+            }
+
+        }
+
     }
-    volatile long  updateRate = 0;
+    volatile long updateRate = 0;
+
     public void startTimer() {
         scheduler = Executors.newScheduledThreadPool(1);
-        
-        switch(dificultad){
+
+        switch (dificultad) {
             case Facil:
                 updateRate = TICK_DELAY;
                 break;
             case Normal:
-                updateRate = TICK_DELAY/2;
+                updateRate = TICK_DELAY / 2;
                 break;
             case Dificil:
-                updateRate = TICK_DELAY/3;
+                updateRate = TICK_DELAY / 3;
                 break;
         }
-        
-        
-        
+
         scheduler.scheduleAtFixedRate(() -> tick(), TICK_DELAY, updateRate, TimeUnit.MILLISECONDS);
         started = true;
     }
@@ -241,7 +275,7 @@ public class SnakeGame {
         if (scheduler != null) {
             scheduler.shutdown();
             started = false;
-            
+
         }
     }
 
@@ -268,7 +302,5 @@ public class SnakeGame {
     public Type getTipo() {
         return Tipo;
     }
-    
-    
-    
+
 }
