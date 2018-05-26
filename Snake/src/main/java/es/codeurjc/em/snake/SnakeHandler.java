@@ -2,19 +2,26 @@ package es.codeurjc.em.snake;
 
 import com.google.gson.Gson;
 import es.codeurjc.em.snake.GameType.Type;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import static java.util.Collections.list;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,18 +50,82 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     private Map<Integer, SnakeGame> games = new ConcurrentHashMap<>();
 
-    private Set<String> names = new CopyOnWriteArraySet<>();
+    private Map<String, String> users = new ConcurrentHashMap<>();
 
-    private static final Gson JSON = new Gson();
+    public static final Gson JSON = new Gson();
 
     private ReentrantReadWriteLock InOut = new ReentrantReadWriteLock();
 
     public static Map<Type, ConcurrentHashMap<String, Long>> Puntuaciones = new ConcurrentHashMap<>();
 
     public SnakeHandler() {
+
         Puntuaciones.put(Type.Arcade, new ConcurrentHashMap<>());
         Puntuaciones.put(Type.Classic, new ConcurrentHashMap<>());
         games.put(gameIds.getAndIncrement(), snakeGame);
+
+        File f = null;
+        FileReader fr = null;
+        BufferedReader br = null;
+        List<String> list = null;
+
+        try {
+            f = new File("src/main/resources/static/Classic.json");
+            fr = new FileReader(f);
+            br = new BufferedReader(fr);
+            list = JSON.fromJson(br, List.class);
+
+            if (list != null) {
+                for (String punt : list) {
+                    Puntuaciones.get(Type.Classic).put(punt.split(":")[0], Long.parseLong(punt.split(":")[1]));
+                }
+            }
+
+            br.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            f = new File("src/main/resources/static/Arcade.json");
+            fr = new FileReader(f);
+            br = new BufferedReader(fr);
+            list = JSON.fromJson(br, List.class);
+
+            if (list != null) {
+                for (String punt : list) {
+                    Puntuaciones.get(Type.Arcade).put(punt.split(":")[0], Long.parseLong(punt.split(":")[1]));
+                }
+            }
+
+            br.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            f = new File("src/main/resources/static/Users.json");
+            fr = new FileReader(f);
+            br = new BufferedReader(fr);
+            list = JSON.fromJson(br, List.class);
+            if (list != null) {
+                for (String n : list) {
+                    users.put(n.split(":")[0], n.split(":")[1]);
+                }
+            }
+
+            br.close();
+
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
     @Override
@@ -178,13 +249,12 @@ public class SnakeHandler extends TextWebSocketHandler {
 
         Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
 
-        names.remove(s.getName());
-
         if (session.getAttributes().get("gameId") != null) {
             int id = (int) session.getAttributes().get("gameId");
 
             SnakeGame game = games.get(id);
             game.removeSnake(s);
+
             InOut.writeLock().lock();
             try {
                 synchronized (game) {
@@ -239,30 +309,62 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     @PostMapping("/names")
     @ResponseStatus(HttpStatus.CREATED)
-    public int PostName(@RequestBody String name) {
+    public int PostName(@RequestBody String user) {
 
-        boolean exist = false;
+        user = user.replace("=", "");
 
-        name = name.replace("=", "");
+        String name = user.split("%3A")[0];
+        String password = user.split("%3A")[1];
 
-        synchronized (this) {
-            for (String n : names) {
-                exist = n.equals(name);
-                if (exist) {
-                    break;
+        String oldUser = users.putIfAbsent(user.split("%3A")[0], user.split("%3A")[1]);
+
+        if (oldUser != null) {
+            return -1;
+        } else {
+            File f = null;
+            FileWriter fw = null;
+            PrintWriter pw = null;
+            try {
+                f = new File("src/main/resources/static/Users.json");
+                fw = new FileWriter(f);
+                pw = new PrintWriter(fw);
+                List<String> list = new LinkedList<>();
+
+                for (String n : users.keySet()) {
+                    list.add(n + ":" + users.get(n));
                 }
+
+                pw.print(SnakeHandler.JSON.toJson(list));
+
+            } catch (FileNotFoundException ex) {
+                System.err.println("Archivo no encontrado");
+            } catch (IOException ex) {
+                Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                pw.close();
             }
-
-            if (!exist) {
-
-                names.add(name);
-
-                return 1;
-
-            } else {
-                return -1;
-            }
+            return 1;
         }
+    }
+
+    @GetMapping("/names/{user}")
+    public int GetLog(@PathVariable String user) {
+
+        user.replace("=", "");
+
+        String name = user.split(":")[0];
+        String password = user.split(":")[1];
+
+        if (users.containsKey(name)) {
+            if (user.split(":")[1].equals(users.get(name))) {
+                return 1;
+            } else {
+                return 2;
+            }
+        } else {
+            return -1;
+        }
+
     }
 
     @GetMapping("/")

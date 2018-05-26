@@ -14,41 +14,48 @@ and open the template in the editor.
 
 <body>
     <link rel="stylesheet" href="style.css"></link>
-   
-        <div class="container-login">
-            <h1>SNAKE GAME</h1>
-            <hr/>
-            <h2>Login</h2>
 
-            <label for="email">
-                <b>User</b>
-            </label>
-            <input id="inputField" type="text" placeholder="User" required>
-            <button class="myButton" id="Continue" style="width: 75%; margin:auto; height: 50px;">Login</button>
+    <div class="container-login">
+        <h1>SNAKE GAME</h1>
+        <hr/>
+        <h2>Login</h2>
+
+        <label for="email">
+            <b>User</b>
+        </label>
+        <input id="inputField" type="text" placeholder="User" required>
+        <input id="inputPassword" type="password" placeholder="Password" name="psw" required>
+        <div style="margin:auto">
+            <button class="myButton" id="Continue" style="width: 50%; height: 50px;">Login</button>
+            <button class="myButton" id="Register" style="width: 50%; height: 50px;">Register</button>
         </div>
-        
+    </div>
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script>
         $(document).keydown(e => {
             var code = e.keyCode;
             if (code === 13) {
+
                 var name = $("#inputField").val();
-                if (name === "") {
-                    window.alert("vacio");
+                var password = $("#inputPassword").val();
+                if (name === ""||password === "") {
+                    window.alert("User empty or password empty");
                 } else {
-                    let n = $("#inputField").val();
+                    let n = name + ":" + password;
                     $.ajax({
-                        method: "POST",
-                        url: "http://" + window.location.host + "/games/names",
-                        data: n
+                        method: "GET",
+                        url: "http://" + window.location.host + "/games/names/" + n,
                     })
                         .done(function (msg) {
-                           
+                            alert("Data Saved: " + msg);
                             if (msg === 1) {
                                 window.sessionStorage.setItem("name", name);
                                 window.location = "http://" + window.location.host + "/lobby.html";
+                            } else if (msg === 2) {
+                                window.alert("Wrong password");
                             } else {
-                                window.alert("Nombre ya en uso");
+                                window.alert("Wrong user");
                             }
 
                         });
@@ -57,12 +64,13 @@ and open the template in the editor.
                 }
             }
         })
-        $("#Continue").click(function () {
+        $("#Register").click(function () {
             var name = $("#inputField").val();
-            if (name === "") {
-                window.alert("vacio");
+            var password = $("#inputPassword").val();
+            if (name === ""||password === "") {
+                window.alert("User empty or empty");
             } else {
-                let n = $("#inputField").val();
+                let n = name + ":" + password;
                 $.ajax({
                     method: "POST",
                     url: "http://" + window.location.host + "/games/names",
@@ -71,10 +79,9 @@ and open the template in the editor.
                     .done(function (msg) {
                         alert("Data Saved: " + msg);
                         if (msg === 1) {
-                            window.sessionStorage.setItem("name", name);
-                            window.location = "http://" + window.location.host + "/lobby.html";
+                            window.alert("User created");
                         } else {
-                            window.alert("Nombre ya en uso");
+                            window.alert("User already in use");
                         }
 
                     });
@@ -82,6 +89,33 @@ and open the template in the editor.
                 //window.location = "http://" + window.location.host + "/lobby.html";
             }
         })
+        $("#Continue").click(function () {
+            var name = $("#inputField").val();
+            var password = $("#inputPassword").val();
+            if (name === ""||password === "") {
+                window.alert("User empty or password empty");
+            } else {
+                let n = name + ":" + password;
+                $.ajax({
+                    method: "GET",
+                    url: "http://" + window.location.host + "/games/names/" + n,
+                })
+                    .done(function (msg) {
+                        alert("Data Saved: " + msg);
+                        if (msg === 1) {
+                            window.sessionStorage.setItem("name", name);
+                            window.location = "http://" + window.location.host + "/lobby.html";
+                        } else if (msg === 2) {
+                            window.alert("Wrong password");
+                        } else {
+                            window.alert("Wrong user");
+                        }
+
+                    });
+                //window.sessionStorage.setItem("name", name);
+                //window.location = "http://" + window.location.host + "/lobby.html";
+            }
+        });
     </script>
 </body>
 
