@@ -77,7 +77,7 @@ and open the template in the editor.
                         <input type="checkbox" class="Tipe" value="Classic">
                         <span class="checkmark"></span>Classic</label>
                 </div>
-                
+
             </div>
 
             <h2>Player Number</h2>
@@ -117,7 +117,8 @@ and open the template in the editor.
 
             <div>
                 MSG:
-                <input id="inputField"><button class="myButton" id="Send">Send</button>
+                <input id="inputField">
+                <button class="myButton" id="Send">Send</button>
             </div>
         </div>
 
@@ -127,17 +128,21 @@ and open the template in the editor.
         </div>
 
         <div id="puntuation-container" class="console-container">
-            <h2>Hall of Fame</h2>
+            <h2 id="Hall">Hall of Fame(Arcade)</h2>
             <div id="points" class="console"></div>
         </div>
+        <div>
+        <button id="Change-Arcade" class="myButton">Arcade</button>
+        <button id="Change-Classic" class="myButton">Classic</button>
+        </div>
 
-        <script id="template" type = "text/x-handlebars-template">
+        <script id="template" type="text/x-handlebars-template">
             <div class="games">
                 <button class="myButton" id=%Id >%Name</button>
                 <h>Numero de jugadores : %Jugadores</h>
                 <h style="background:white;">%Dificultad</h>           
         </div >
-        </script>
+    </script>
 
 
 </body>

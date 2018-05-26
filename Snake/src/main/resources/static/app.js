@@ -307,7 +307,7 @@ class Game {
 					}
 					break;
 				case 'failed-join':
-					alert("A LA MIERDA");
+					alert("You couldn't join to the game");
 					window.location = "http://" + window.location.host + "/lobby.html";
 					break;
 			}

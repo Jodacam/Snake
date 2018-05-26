@@ -48,10 +48,8 @@ public class SnakeHandler extends TextWebSocketHandler {
     private static final Gson JSON = new Gson();
 
     private ReentrantReadWriteLock InOut = new ReentrantReadWriteLock();
-    
-    public static Map<Type,ConcurrentHashMap<String,Long>> Puntuaciones = new ConcurrentHashMap<>();
-    
-    
+
+    public static Map<Type, ConcurrentHashMap<String, Long>> Puntuaciones = new ConcurrentHashMap<>();
 
     public SnakeHandler() {
         Puntuaciones.put(Type.Arcade, new ConcurrentHashMap<>());
@@ -99,34 +97,33 @@ public class SnakeHandler extends TextWebSocketHandler {
             Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
 
             if (m.getMessageType().equals("connect")) {
-               
+
                 session.getAttributes().put("Thread", Thread.currentThread());
-                
+
                 s.setName(m.getName());
                 InOut.readLock().lock();
                 SnakeGame game = games.get(m.getId());
                 if (game != null) {
-                   try{ 
-                    game.addSnake(s);
-                    InOut.readLock().unlock();
-                    session.getAttributes().put("gameId", m.getId());
-                    StringBuilder sb = new StringBuilder();
-                    for (Snake snake : game.getSnakes()) {
-                        sb.append(String.format("{\"id\": %d, \"color\": \"%s\", \"name\":\"%s\"}", snake.getId(), snake.getHexColor(), snake.getName()));
-                        sb.append(',');
+                    try {
+                        game.addSnake(s);
+                        InOut.readLock().unlock();
+                        session.getAttributes().put("gameId", m.getId());
+                        StringBuilder sb = new StringBuilder();
+                        for (Snake snake : game.getSnakes()) {
+                            sb.append(String.format("{\"id\": %d, \"color\": \"%s\", \"name\":\"%s\"}", snake.getId(), snake.getHexColor(), snake.getName()));
+                            sb.append(',');
+                        }
+                        sb.deleteCharAt(sb.length() - 1);
+                        String msg = String.format("{\"type\": \"join\",\"data\":[%s]}", sb.toString());
+                        game.broadcast(msg);
+                        return;
+
+                    } catch (InterruptedException e) {
+                        InOut.readLock().unlock();
+                        String failed = String.format("{\"type\": \"failed-join\",\"data\":\"You couldn't connect to game %d\"}", m.getId());
+                        session.sendMessage(new TextMessage(failed));
+                        return;
                     }
-                    sb.deleteCharAt(sb.length() - 1);
-                    String msg = String.format("{\"type\": \"join\",\"data\":[%s]}", sb.toString());
-                    game.broadcast(msg);
-                    return;
-                    
-                    
-                   } catch(InterruptedException e){
-                    InOut.readLock().unlock();
-                    String failed = String.format("{\"type\": \"failed-join\",\"data\":\"You couldn't connect to game %d\"}", m.getId());
-                    session.sendMessage(new TextMessage(failed));
-                    return;
-                   }
                 } else {
                     InOut.readLock().unlock();
                     String failed = String.format("{\"type\": \"failed-join\",\"data\":\"You couldn't connect to game %d\"}", m.getId());
@@ -148,21 +145,22 @@ public class SnakeHandler extends TextWebSocketHandler {
                 game.broadcast(msg);
                 return;
             }
-            
-            if(m.getMessageType().equals("Start")){
+
+            if (m.getMessageType().equals("Start")) {
                 SnakeGame game;
                 game = games.get(m.getId());
-                if (game.getNumSnakes()>1)
+                if (game.getNumSnakes() > 1) {
                     game.startTimer();
+                }
                 return;
             }
-            
-            if(m.getMessageType().equals("Disconnect")){
-                Thread t = (Thread)session.getAttributes().get("Thread");
+
+            if (m.getMessageType().equals("Disconnect")) {
+                Thread t = (Thread) session.getAttributes().get("Thread");
                 t.interrupt();
                 return;
             }
-            
+
             Direction d = Direction.valueOf(m.getDirection().toUpperCase());
             s.setDirection(d);
 
@@ -184,10 +182,10 @@ public class SnakeHandler extends TextWebSocketHandler {
 
         if (session.getAttributes().get("gameId") != null) {
             int id = (int) session.getAttributes().get("gameId");
-            
-                SnakeGame game = games.get(id);
-                game.removeSnake(s);
-                InOut.writeLock().lock();
+
+            SnakeGame game = games.get(id);
+            game.removeSnake(s);
+            InOut.writeLock().lock();
             try {
                 synchronized (game) {
                     if (game.getNumSnakes() > 0 || game.getName().equals("global")) {
@@ -280,35 +278,39 @@ public class SnakeHandler extends TextWebSocketHandler {
 
         return gamesInfo;
     }
-    
+
     @GetMapping("/Random")
-    public int GetRandomGame(){
+    public int GetRandomGame() {
         int number = -1;
         Collection<SnakeGame> ActualGames = games.values();
-        List<SnakeGame> list = new ArrayList<SnakeGame>( ActualGames );
+        List<SnakeGame> list = new ArrayList<SnakeGame>(ActualGames);
         list.remove(0);
-        list.sort((p1,  p2) -> p1.getNumSnakes() - p2.getNumSnakes());                     
-        if (list.get(0).getNumSnakes() != list.get(0).getJugadoresMinimos()){
+        list.sort((p1, p2) -> p1.getNumSnakes() - p2.getNumSnakes());
+        if (list.get(0).getNumSnakes() != list.get(0).getJugadoresMinimos()) {
             number = list.get(0).getId();
-        }else{
-            number -=list.get(0).getId();
+        } else {
+            number -= list.get(0).getId();
         }
         return number;
     }
-    
-     @GetMapping("/Puntuaciones/{tipo}")
-     public List<String> GetPuntuaciones(@PathVariable Type tipo){        
-         List<String> list = new LinkedList<>();
-         
-         for (String name : Puntuaciones.get(tipo).keySet()){
-             list.add(name+":"+Puntuaciones.get(tipo).get(name));             
-         }  
-         
-         switch(tipo){
-             
-         }        
-         list.sort((p1,p2)-> Integer.parseInt(p1.split(":")[1]) - Integer.parseInt(p2.split(":")[1]));
-         return list;
-     }
-    
+
+    @GetMapping("/Puntuaciones/{tipo}")
+    public List<String> GetPuntuaciones(@PathVariable Type tipo) {
+        List<String> list = new LinkedList<>();
+
+        for (String name : Puntuaciones.get(tipo).keySet()) {
+            list.add(name + ":" + Puntuaciones.get(tipo).get(name));
+        }
+
+        switch (tipo) {
+            case Arcade:
+                list.sort((p1, p2) -> Integer.parseInt(p1.split(":")[1]) - Integer.parseInt(p2.split(":")[1]));
+                break;
+            case Classic:
+                list.sort((p1, p2) -> Integer.parseInt(p2.split(":")[1]) - Integer.parseInt(p1.split(":")[1]));
+                break;
+        }
+        return list;
+    }
+
 }

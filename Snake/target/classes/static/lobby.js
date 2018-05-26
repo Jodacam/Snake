@@ -198,7 +198,7 @@ $(function () {
     window.setInterval(function () {
         $.ajax({
             method: "GET",
-            url: "http://" + window.location.host + "/games/Puntuaciones",
+            url: "http://" + window.location.host + "/games/Puntuaciones/"+tipoPunct,
         })
             .done(function (msg) {
                 $("#points").html("");
@@ -211,6 +211,15 @@ $(function () {
 
     }, 200);
 
+    $("#Change-Arcade").click(function(e){
+        tipoPunct = "Arcade";
+        $("#Hall").html("Hall of Fame(Arcade)");
+    });
+
+    $("#Change-Classic").click(function(e){
+        tipoPunct = "Classic";
+        $("#Hall").html("Hall of Fame(Classic)");
+    });
 });
 var level = "Facil";
 $(document).on('click', '.level', function (e) {
@@ -238,4 +247,4 @@ $(document).on('click', '.Tipe', function (e) {
     }
     thisCheck.prop('checked', true);
 });
-
+var tipoPunct = "Arcade";
