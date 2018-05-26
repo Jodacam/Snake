@@ -87,6 +87,14 @@ class Game {
 				$("#Comenzar").hide();
 			});
 		}
+		$("#Cancel").click(function(e){
+			game.socket.send(JSON.stringify({
+				id: window.sessionStorage.getItem("game"),
+				messageType: "Disconnect",
+				name: window.sessionStorage.getItem("name"),
+				direction: null
+			}));
+		})
 		this.fruits = [];
 		this.snakes = [];
 		let canvas = document.getElementById('playground');
@@ -97,25 +105,29 @@ class Game {
 
 		this.context = canvas.getContext('2d');
 		window.addEventListener('keydown', e => {
-			e.preventDefault();
+			//e.preventDefault();
 			var code = e.keyCode;
 			if (code > 12 && code < 41) {
 				switch (code) {
 					case 37:
 						if (this.direction != 'east')
 							this.setDirection('west');
+							e.preventDefault();
 						break;
 					case 38:
 						if (this.direction != 'south')
 							this.setDirection('north');
+							e.preventDefault();
 						break;
 					case 39:
 						if (this.direction != 'west')
 							this.setDirection('east');
+							e.preventDefault();
 						break;
 					case 40:
 						if (this.direction != 'north')
 							this.setDirection('south');
+							e.preventDefault();
 						break;
 					case 13:
 						InputField = document.getElementById('inputField');
