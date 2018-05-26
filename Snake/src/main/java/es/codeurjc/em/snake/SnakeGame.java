@@ -13,6 +13,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.lang.InterruptedException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SnakeGame {
 
@@ -35,7 +36,9 @@ public class SnakeGame {
 
     private volatile boolean started = false;
 
+    public AtomicBoolean ganada;
     public SnakeGame(GameType g, int id) {
+        ganada = new AtomicBoolean(false);
         Tiempo = 0;
         this.name = g.getName();
         this.id = id;
@@ -79,9 +82,10 @@ public class SnakeGame {
     public void removeSnake(Snake snake) throws InterruptedException {
 
         synchronized (snake) {
-            System.out.print("Serpiente Borrada en partida" + this.getName());
+            System.out.println("Serpiente Borrada en partida" + this.getName());
             snakes.remove(Integer.valueOf(snake.getId()));
         }
+        
         int count = numSnakes.decrementAndGet();
 
         if (Tipo != Type.Lobby) {
@@ -167,6 +171,7 @@ public class SnakeGame {
                         }
                     }
                     if (ganada) {
+                        this.ganada.set(true);
                         s.deleteCharAt(s.length() - 1);
                         String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
                         broadcast(Win);
@@ -204,6 +209,7 @@ public class SnakeGame {
 
                         }
                         if (ganada) {
+                            this.ganada.set(true);
                             s.deleteCharAt(s.length() - 1);
                             String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
                             broadcast(Win);

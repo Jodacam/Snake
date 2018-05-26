@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -27,6 +28,7 @@ public class Snake {
         private String name;
 
 	public Snake(int id, WebSocketSession session) {
+                
 		this.id = id;
 		this.session = session;
 		this.hexColor = SnakeUtils.getRandomHexColor();
@@ -54,7 +56,7 @@ public class Snake {
 		sendMessage("{\"type\": \"kill\"}");
 	}
 
-	protected void sendMessage(String msg) throws Exception {
+	protected synchronized void  sendMessage(String msg) throws Exception {
 		this.session.sendMessage(new TextMessage(msg));
 	}
 

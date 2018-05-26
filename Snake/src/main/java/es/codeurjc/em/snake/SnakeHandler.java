@@ -184,11 +184,13 @@ public class SnakeHandler extends TextWebSocketHandler {
             int id = (int) session.getAttributes().get("gameId");
 
             SnakeGame game = games.get(id);
+            if (game != null){
             game.removeSnake(s);
             InOut.writeLock().lock();
             try {
+                
                 synchronized (game) {
-                    if (game.getNumSnakes() > 0 || game.getName().equals("global")) {
+                    if (!game.ganada.get() && (game.getNumSnakes() > 0 || game.getName().equals("global"))) {
 
                         String msg = String.format("{\"type\": \"leave\", \"id\": %d}", s.getId());
 
@@ -202,7 +204,7 @@ public class SnakeHandler extends TextWebSocketHandler {
                 InOut.writeLock().unlock();
             }
         }
-
+      }
         //snakeIds.decrementAndGet();
     }
 

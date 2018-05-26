@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="es.codeurjc.em.snake.SnakeTest" time="2.925" tests="3" errors="0" skipped="0" failures="0">
+<testsuite name="es.codeurjc.em.snake.SnakeTest" time="21.992" tests="1" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk1.8.0_151\jre\bin"/>
@@ -60,7 +60,5 @@
     <property name="sun.desktop" value="windows"/>
     <property name="sun.cpu.isalist" value="amd64"/>
   </properties>
-  <testcase name="testConnection" classname="es.codeurjc.em.snake.SnakeTest" time="0.307"/>
-  <testcase name="testJoinLobby" classname="es.codeurjc.em.snake.SnakeTest" time="1.084"/>
-  <testcase name="testCreateGame" classname="es.codeurjc.em.snake.SnakeTest" time="1.534"/>
+  <testcase name="testCarga" classname="es.codeurjc.em.snake.SnakeTest" time="21.992"/>
 </testsuite>
