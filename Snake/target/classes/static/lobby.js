@@ -51,12 +51,14 @@ function CargarPartidas(e) {
                 let newTemplate = template.replace("%Name", n[0]);
                 newTemplate = newTemplate.replace("%Jugadores", n[1] + "/" + n[5]);
                 newTemplate = newTemplate.replace("%Id", "'" + n[2] + "'");
-                newTemplate = newTemplate.replace("%Dificultad", n[3]);
                 if(n[3]==="Dificil"){
+                    newTemplate = newTemplate.replace("%Dificultad", "Hard");
                     newTemplate = newTemplate.replace("white", "lightcoral");
                 }else if(n[3]==="Normal"){
+                    newTemplate = newTemplate.replace("%Dificultad", "Normal");
                     newTemplate = newTemplate.replace("white", "lightgreen");
                 }else if(n[3]==="Facil"){
+                    newTemplate = newTemplate.replace("%Dificultad", "Easy");
                     newTemplate = newTemplate.replace("white", "lightblue");
                 }
                 $("#games").append(newTemplate);

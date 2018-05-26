@@ -1,6 +1,12 @@
 package es.codeurjc.em.snake;
 
 import es.codeurjc.em.snake.GameType.Type;
+import static es.codeurjc.em.snake.SnakeHandler.Puntuaciones;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -12,7 +18,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.lang.InterruptedException;
+import sun.font.Font2D;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SnakeGame {
@@ -133,7 +139,7 @@ public class SnakeGame {
                 f.append(",");
             }
             long Time = 0;
-            switch(Tipo){
+            switch (Tipo) {
                 case Classic:
                     Time = 60000 - Tiempo;
                     break;
@@ -144,7 +150,7 @@ public class SnakeGame {
             name.deleteCharAt(name.length() - 1);
             sb.deleteCharAt(sb.length() - 1);
             f.deleteCharAt(f.length() - 1);
-            String msg = String.format("{\"type\": \"update\", \"data\" : [%s] , \"fruits\" : [%s], \"People\":[%s],\"Tiempo\":%d }", sb.toString(), f.toString(), name.toString(),Time);
+            String msg = String.format("{\"type\": \"update\", \"data\" : [%s] , \"fruits\" : [%s], \"People\":[%s],\"Tiempo\":%d }", sb.toString(), f.toString(), name.toString(), Time);
 
             broadcast(msg);
             StringBuilder s = new StringBuilder();
@@ -174,8 +180,27 @@ public class SnakeGame {
                         this.ganada.set(true);
                         s.deleteCharAt(s.length() - 1);
                         String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
+                        synchronized (SnakeHandler.Puntuaciones.get(Tipo)) {
+                            try{
+                                File puntArcade = new File("src/main/resources/static/Arcade.json");
+                                FileWriter fw = new FileWriter(puntArcade);
+                                PrintWriter pw = new PrintWriter(fw);
+                                List<String> list = new LinkedList<>();
+                                
+                                for (String n : SnakeHandler.Puntuaciones.get(Tipo).keySet()) {
+                                    list.add(n + ":" + Puntuaciones.get(Tipo).get(n));
+                                }
+                                
+                                pw.print(SnakeHandler.JSON.toJson(list));
+                                
+                                fw.close();
+                                pw.close();
+                            }catch(FileNotFoundException ex){
+                                System.err.println("Archivo no encontrado");
+                            }
+                        }
                         broadcast(Win);
-                        stopTimer();
+                        stopTimer(); 
                     }
 
                     break;
@@ -212,6 +237,25 @@ public class SnakeGame {
                             this.ganada.set(true);
                             s.deleteCharAt(s.length() - 1);
                             String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
+                            synchronized (SnakeHandler.Puntuaciones.get(Tipo)) {
+                                try{
+                                File puntArcade = new File("src/main/resources/static/Classic.json");
+                                FileWriter fw = new FileWriter(puntArcade);
+                                PrintWriter pw = new PrintWriter(fw);
+                                List<String> list2 = new LinkedList<>();
+                                
+                                for (String n : SnakeHandler.Puntuaciones.get(Tipo).keySet()) {
+                                    list2.add(n + ":" + Puntuaciones.get(Tipo).get(name));
+                                }
+                                
+                                pw.print(SnakeHandler.JSON.toJson(list));
+                                
+                                fw.close();
+                                pw.close();
+                                }catch(FileNotFoundException ex){
+                                    System.err.println("Archivo no encontrado");
+                                }
+                            }
                             broadcast(Win);
                             stopTimer();
                         }
