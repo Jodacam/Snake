@@ -34,6 +34,9 @@ public class SnakeGame {
     private long Tiempo;
     private String name;
 
+    
+    
+    //Cola de los huecos libres para comprobar si puedes entrar en la partida
     private BlockingQueue<Integer> Huecos;
 
     private volatile int id;
@@ -42,6 +45,7 @@ public class SnakeGame {
 
     public AtomicBoolean ganada;
     public SnakeGame(GameType g, int id) {
+        //Inicializamos las variables
         ganada = new AtomicBoolean(false);
         Tiempo = 0;
         this.name = g.getName();
@@ -57,7 +61,11 @@ public class SnakeGame {
 
     public void addSnake(Snake snake) throws InterruptedException {
 
+        
+        //Metemos una serpiente en la partida. Si es el Lobby nos saltamos el tener que esperar en la cola
         if (Tipo != Type.Lobby) {
+            //Intentamos obtener nuestro hueco en la partida por 5 segundos, si no lo conseguimos lanzamos la excepcion para que el TryCach de SnakeHandler se encargue de mandar
+            // El Failed-Join
             Integer i = Huecos.poll(5, TimeUnit.SECONDS);
             if (i == null) {
                 throw new InterruptedException();
@@ -69,6 +77,8 @@ public class SnakeGame {
 
         int count = numSnakes.getAndIncrement();
 
+        
+        //Siempre que la partida no este empezada y llegamos a los jugadores de la partida
         if (count == jugadoresMinimos - 1 && Tipo != Type.Lobby && !started) {
             startTimer();
 
@@ -83,17 +93,19 @@ public class SnakeGame {
         return snakes.values();
     }
 
+    
+    //Eliminamos una serpiente de la partida.
     public void removeSnake(Snake snake) throws InterruptedException {
 
         synchronized (snake) {
             System.out.println("Serpiente Borrada en partida " + this.getName());
             snakes.remove(Integer.valueOf(snake.getId()));
         }
-        
+        //Reducimos el contador de serpientes
         int count = numSnakes.decrementAndGet();
-
+        //Metemos el hueco en la cola
         if (Tipo != Type.Lobby) {
-            Huecos.put(0);
+            Huecos.put(count);
         }
 
         if (count == 0) {
@@ -131,11 +143,16 @@ public class SnakeGame {
                 sb.append(getLocationsJson(snake));
                 sb.append(',');
             }
+            
+            //Actualizamos el estado de las frutas
             StringBuilder f = new StringBuilder();
             for (Fruit fruit : frutas) {
                 f.append(String.format("{\"x\": %d, \"y\": %d}", fruit.getPosition().x, fruit.getPosition().y));
                 f.append(",");
             }
+            
+            
+            //Dependiendo del tipo de partida se manda un tiempo u otro
             long Time = 0;
             switch (Tipo) {
                 case Classic:
@@ -153,14 +170,19 @@ public class SnakeGame {
             broadcast(msg);
             StringBuilder s = new StringBuilder();
             boolean ganada = false;
+            
+            
+            //Condiciones de victoria
             switch (Tipo) {
                 case Arcade:
 
                     for (Snake snake : getSnakes()) {
-                        if (snake.getTail().size() > 10) {
+                        //Enm arcade Ganamos cuendo nuestra serpiente supera los 15 d longitud
+                        if (snake.getTail().size() > 15) {
                             s.append("{\"id\": \"" + snake.getName() + "\",  \"win\": true");
                             s.append("},");
                             ganada = true;
+                            //Le damos por vencedor y Calculamos el tiempo que tardo en Hacerlo
                             Long previLong = SnakeHandler.Puntuaciones.get(Tipo).putIfAbsent(snake.getName(), Tiempo/1000);
 
                             if (null != previLong) {
@@ -175,9 +197,11 @@ public class SnakeGame {
                         }
                     }
                     if (ganada) {
+                        //Si se ha ganado se manda el mensaje de Ganar a todos los jugadores
                         this.ganada.set(true);
                         s.deleteCharAt(s.length() - 1);
                         String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
+                        //Se guarda la puntuacion en el archivo. No pueden dos partidas escribitr en ela rchivo a la vez
                         synchronized (SnakeHandler.Puntuaciones.get(Tipo)) {
                             try{
                                 File puntArcade = new File("data/Arcade.json");
@@ -203,11 +227,13 @@ public class SnakeGame {
 
                     break;
                 case Unlimited:
-
+                    //Unlimited solo acaba cuando no hay jugadores
                     break;
                 case Classic:
+                    //La condicion de clasimo es que hayan pasado 60 segundos. El primero con mas puntos gana
                     if (Tiempo > 60 * 1000) {
                         System.out.println("Terminada");
+                        //Coge las serpientes, las ordena y al primer jugador le da la victoria
                         List<Snake> list = new ArrayList<>(getSnakes());
                         list.sort((p1, p2) -> p2.getPoints() - p1.getPoints());
                         for (int i = 0; i < list.size(); i++) {
@@ -232,9 +258,11 @@ public class SnakeGame {
 
                         }
                         if (ganada) {
+                            // Al igual que antes guarda en el fichero todo y sincronizado
                             this.ganada.set(true);
                             s.deleteCharAt(s.length() - 1);
                             String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
+                           
                             synchronized (SnakeHandler.Puntuaciones.get(Tipo)) {
                                 try{
                                 File puntArcade = new File("data/Classic.json");

@@ -37,27 +37,46 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 @RequestMapping("/games")
 public class SnakeHandler extends TextWebSocketHandler {
 
+    
+    
+    //ID de los Jugadores
     private AtomicInteger snakeIds = new AtomicInteger(0);
+    
+    //Id de las partidas
     private AtomicInteger gameIds = new AtomicInteger(0);
 
+    
+    //Mapa de partidas el Id es un numero sacado de GameIds
     private Map<Integer, SnakeGame> games = new ConcurrentHashMap<>();
+    
+    //Mapa de Usuarios Registrados. Si un usuario intenta registrarse con el nombre de otro jugador estará aqui guardado y no lo hará
     private Map<String, String> users = new ConcurrentHashMap<>();
+    
+    //Puntuaciones, Es un doble mapa para poder Guardar por Tipos y despues dentro estan otro Mapa de puntuaciones, donde la clave es el nombre del Usuario
     public static Map<Type, ConcurrentHashMap<String, Long>> Puntuaciones = new ConcurrentHashMap<>();
 
+    
+    //Lobby. Es un Sanake para aprovechar sus funciones de añadir, eliminar y BroadCast
     private SnakeGame snakeGame = new SnakeGame(new GameType("global", GameType.Dificultad.Dificil, GameType.Type.Lobby, -1), 0);
 
     private static final String SNAKE_ATT = "snake";
 
+    
+    //Objeto de GSON para los JSON
     public static final Gson JSON = new Gson();
 
     private ReentrantReadWriteLock InOut = new ReentrantReadWriteLock();
 
     public SnakeHandler() {
 
+        
+        //Inicializamos las puntuaciones
         Puntuaciones.put(Type.Arcade, new ConcurrentHashMap<>());
         Puntuaciones.put(Type.Classic, new ConcurrentHashMap<>());
         games.put(gameIds.getAndIncrement(), snakeGame);
 
+        
+        // Leemos los archivos Arcade.json y Classic.json de la carpeta Data. Ahi estan las Puntuaciones. Al estar en el constructor aun no hay nada en el servidor asi que funcionara
         File f = null;
         FileReader fr = null;
         BufferedReader br = null;
@@ -101,6 +120,8 @@ public class SnakeHandler extends TextWebSocketHandler {
             Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+        
+        //Leemos el archivo de los Usuarios Registrados
         try {
             f = new File("data/Users.json");
             fr = new FileReader(f);
@@ -125,6 +146,7 @@ public class SnakeHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 
+        //Al Conectarse metemos un serpiente en la sesion
         int id = snakeIds.getAndIncrement();
 
         Snake s = new Snake(id, session);
@@ -135,7 +157,7 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-
+        //Swich de los diferentes mensajes
         try {
 
             String payload = message.getPayload();
@@ -152,16 +174,18 @@ public class SnakeHandler extends TextWebSocketHandler {
                 case "ping":
                     break;
                 case "connect":
-
+                    //En vez de conectar por ConectionEstablish, Nos conectamos con un mensaje
+                    //Metemos el Hilo de esta funcion en la sesion paras poder interumpirlo
                     session.getAttributes().put("Thread", Thread.currentThread());
                     s.setName(m.getName());
                     
                     SnakeGame game;
-                    
+                    //Lock de Lectores/Escritores, no se puede meter gente en una partida mientras se elimina una partida, asi no se puede unir nadie a una partida que acaba de terminar
                     InOut.readLock().lock();
                     game = games.get(m.getId());
-                    if (game != null) {
+                    if (game != null && !game.ganada.get()) {
                         try {
+                            //Añadimos la serpiente
                             game.addSnake(s);
                             InOut.readLock().unlock();
                             session.getAttributes().put("gameId", m.getId());
@@ -170,13 +194,16 @@ public class SnakeHandler extends TextWebSocketHandler {
                                 sb.append(String.format("{\"id\": %d, \"color\": \"%s\", \"name\":\"%s\"}", snake.getId(), snake.getHexColor(), snake.getName()));
                                 sb.append(',');
                             }
+                           
                             sb.deleteCharAt(sb.length() - 1);
                             String msg = String.format("{\"type\": \"join\",\"data\":[%s]}", sb.toString());
+                            //Mandamos el mensaje de Join
                             game.broadcast(msg);
                             return;
 
                         } catch (InterruptedException e) {
                             InOut.readLock().unlock();
+                            //Si el Usuario no se ha podido conectar se le mandara un Failed Join que le echara del juego. 
                             String failed = String.format("{\"type\": \"failed-join\",\"data\":\"You couldn't connect to game %d\"}", m.getId());
                             session.sendMessage(new TextMessage(failed));
                             break;
@@ -189,7 +216,7 @@ public class SnakeHandler extends TextWebSocketHandler {
 
                     break;
                 case "chat":
-
+                    //Recoge el mensaje para el chat y lo envia a los demas jugadores de la partida
                     SnakeGame game2;
 
                     if (m.getId() > 0) {
@@ -206,13 +233,13 @@ public class SnakeHandler extends TextWebSocketHandler {
                     break;
 
                 case "Disconnect":
-
+                    //Si un jugador esta en Espera y le da a cancelar interumpe al hilo para que salga de la espera
                     Thread t = (Thread) session.getAttributes().get("Thread");
                     t.interrupt();
 
                     break;
                 case "Start":
-
+                    //Empieza una partida
                     SnakeGame game3;
                     game3 = games.get(m.getId());
                     if (game3.getNumSnakes() > 1) {
@@ -236,22 +263,25 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-
+        // Cuando se desconecta un jugadores le quitamos de la partida. Si la partida tiene 0 jugadores se cierra automaticamente
         System.out.println("Connection closed. Session " + session.getId());
 
         Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
 
+        
         if (session.getAttributes().get("gameId") != null) {
+            //Obtenemos el Id de la partdia
             int id = (int) session.getAttributes().get("gameId");
 
             SnakeGame game = games.get(id);
             
             if (game != null) {
+                //Eliminamos la serpiente
                 game.removeSnake(s);
 
                 InOut.writeLock().lock();
                 try {
-
+                    //Borramos la partida si ya se ha ganado o si no hay serpientes
                     synchronized (game) {
                         if (!game.ganada.get() && (game.getNumSnakes() > 0 || game.getName().equals("global"))) {
 
@@ -270,18 +300,22 @@ public class SnakeHandler extends TextWebSocketHandler {
         }
         //snakeIds.decrementAndGet();
     }
-
+    
+    
+    
+    //Api Rest. Aqui se crea una partida
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public int PostGame(@RequestBody String tstring
-    ) {
-
+    public int PostGame(@RequestBody String tstring) 
+    {
+        //Lee el tipo de partida
         GameType t = JSON.fromJson(tstring, GameType.class
         );
         boolean exist = false;
 
         t.setName(t.getName().replace("=", ""));
 
+        //Comprobara que la partida existe con ese nombre.
         synchronized (this) {
             for (SnakeGame game : games.values()) {
                 exist = game.getName().equals(t.getName());
@@ -289,7 +323,7 @@ public class SnakeHandler extends TextWebSocketHandler {
                     break;
                 }
             }
-
+            //Si no existe la crea
             if (!exist) {
 
                 int game = gameIds.getAndIncrement();
@@ -303,9 +337,14 @@ public class SnakeHandler extends TextWebSocketHandler {
         }
     }
 
+    
+    
+    Object cierre = new Object();
+    
+    // Sirve para Registrar un usuario
     @PostMapping("/names")
     @ResponseStatus(HttpStatus.CREATED)
-    public int PostName(@RequestBody String user
+  public int  PostName(@RequestBody String user
     ) {
 
         user = user.replace("=", "");
@@ -313,11 +352,15 @@ public class SnakeHandler extends TextWebSocketHandler {
         String name = user.split("%3A")[0];
         String password = user.split("%3A")[1];
 
+        //Comprobamos que no hubiera un usuario con el mismo nombre
         String oldUser = users.putIfAbsent(user.split("%3A")[0], user.split("%3A")[1]);
 
         if (oldUser != null) {
             return -1;
         } else {
+            synchronized(cierre){
+                
+            //Escribimos el usuario en el fichero
             File f = null;
             FileWriter fw = null;
             PrintWriter pw = null;
@@ -340,10 +383,13 @@ public class SnakeHandler extends TextWebSocketHandler {
             } finally {
                 pw.close();
             }
+            }
             return 1;
         }
     }
 
+  
+    //Comprueba que el usuario y contraseña son correctos y te deja conectarte
     @GetMapping("/names/{user}")
     public int GetLog(@PathVariable String user
     ) {
@@ -364,7 +410,7 @@ public class SnakeHandler extends TextWebSocketHandler {
         }
 
     }
-
+    //Obtiene las partidas para mostrarlas en Java
     @GetMapping("/")
     public List<String> GetGames() {
         List<String> gamesInfo = new ArrayList<>();
@@ -379,9 +425,12 @@ public class SnakeHandler extends TextWebSocketHandler {
         return gamesInfo;
     }
 
+    
+    //Te conecta a una partida. Busca la que menos jugadores tenga y haya un hueco vacio
     @GetMapping("/Random")
     public int GetRandomGame() {
         int number = -1;
+        if(games.values().size() > 2){
         Collection<SnakeGame> ActualGames = games.values();
         List<SnakeGame> list = new ArrayList<SnakeGame>(ActualGames);
         list.remove(0);
@@ -391,9 +440,12 @@ public class SnakeHandler extends TextWebSocketHandler {
         } else {
             number -= list.get(0).getId();
         }
+        }
         return number;
     }
 
+    
+    //Pides los Hall of Fame del diferente modo de juego
     @GetMapping("/Puntuaciones/{tipo}")
     public List<String> GetPuntuaciones(@PathVariable Type tipo
     ) {

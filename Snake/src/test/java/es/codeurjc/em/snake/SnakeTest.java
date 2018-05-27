@@ -75,9 +75,10 @@ public class SnakeTest {
 "            \"dificultad\": \"Normal\",\n" +
 "            \"Tipo\": \"Arcade\",\n" +
 "            \"jugadores\": 2}").asString();
+        
         int Partida =Integer.parseInt(  request.getBody());
         
-        assertTrue("El id de partida tiene que ser mayor a 1", Partida > 0);
+        assertTrue("El id de partida tiene que ser mayor a 0", Partida > 0);
         
         WebSocketClient wsc = new WebSocketClient();
         
@@ -188,7 +189,7 @@ public class SnakeTest {
 "            \"jugadores\": 4}").asString();
              int Partida = Integer.parseInt(request.getBody());
         
-             assertTrue("El id de partida tiene que ser mayor a 1", Partida > 0);
+             assertTrue("El id de partida tiene que ser mayor a 0", Partida > 0);
            
             clients[0].sendMessage(" {\"id\":"+Partida+", \"messageType\": \"connect\", \"name\": +\""+"Hey"+"\", \"direction\": null}");
          
