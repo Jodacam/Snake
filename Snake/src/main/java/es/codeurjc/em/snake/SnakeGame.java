@@ -2,7 +2,6 @@ package es.codeurjc.em.snake;
 
 import es.codeurjc.em.snake.GameType.Type;
 import static es.codeurjc.em.snake.SnakeHandler.Puntuaciones;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -18,7 +17,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import sun.font.Font2D;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SnakeGame {
@@ -88,7 +86,7 @@ public class SnakeGame {
     public void removeSnake(Snake snake) throws InterruptedException {
 
         synchronized (snake) {
-            System.out.println("Serpiente Borrada en partida" + this.getName());
+            System.out.println("Serpiente Borrada en partida " + this.getName());
             snakes.remove(Integer.valueOf(snake.getId()));
         }
         
@@ -163,11 +161,11 @@ public class SnakeGame {
                             s.append("{\"id\": \"" + snake.getName() + "\",  \"win\": true");
                             s.append("},");
                             ganada = true;
-                            Long previLong = SnakeHandler.Puntuaciones.get(Tipo).putIfAbsent(snake.getName(), Tiempo);
+                            Long previLong = SnakeHandler.Puntuaciones.get(Tipo).putIfAbsent(snake.getName(), Tiempo/1000);
 
                             if (null != previLong) {
-                                if (previLong > Tiempo) {
-                                    SnakeHandler.Puntuaciones.get(Tipo).put(snake.getName(), Tiempo);
+                                if (previLong > Tiempo/1000) {
+                                    SnakeHandler.Puntuaciones.get(Tipo).put(snake.getName(), Tiempo/1000);
                                 }
                             }
 
@@ -182,7 +180,7 @@ public class SnakeGame {
                         String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
                         synchronized (SnakeHandler.Puntuaciones.get(Tipo)) {
                             try{
-                                File puntArcade = new File("src/main/resources/static/Arcade.json");
+                                File puntArcade = new File("data/Arcade.json");
                                 FileWriter fw = new FileWriter(puntArcade);
                                 PrintWriter pw = new PrintWriter(fw);
                                 List<String> list = new LinkedList<>();
@@ -239,16 +237,16 @@ public class SnakeGame {
                             String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
                             synchronized (SnakeHandler.Puntuaciones.get(Tipo)) {
                                 try{
-                                File puntArcade = new File("src/main/resources/static/Classic.json");
+                                File puntArcade = new File("data/Classic.json");
                                 FileWriter fw = new FileWriter(puntArcade);
                                 PrintWriter pw = new PrintWriter(fw);
                                 List<String> list2 = new LinkedList<>();
                                 
                                 for (String n : SnakeHandler.Puntuaciones.get(Tipo).keySet()) {
-                                    list2.add(n + ":" + Puntuaciones.get(Tipo).get(name));
+                                    list2.add(n + ":" + Puntuaciones.get(Tipo).get(n));
                                 }
                                 
-                                pw.print(SnakeHandler.JSON.toJson(list));
+                                pw.print(SnakeHandler.JSON.toJson(list2));
                                 
                                 fw.close();
                                 pw.close();

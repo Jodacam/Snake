@@ -77,6 +77,7 @@ class Game {
 		if (starter === "false") {
 			$("#Comenzar").hide();
 		} else {
+
 			$("#Comenzar").click(function (e) {
 				game.socket.send(JSON.stringify({
 					id: window.sessionStorage.getItem("game"),
@@ -84,10 +85,9 @@ class Game {
 					name: window.sessionStorage.getItem("name"),
 					direction: null
 				}));
-				$("#Comenzar").hide();
 			});
 		}
-		$("#Cancel").click(function(e){
+		$("#Cancel").click(function (e) {
 			game.socket.send(JSON.stringify({
 				id: window.sessionStorage.getItem("game"),
 				messageType: "Disconnect",
@@ -95,6 +95,9 @@ class Game {
 				direction: null
 			}));
 		})
+		$("#Salir").click(function(e){
+			window.location = "http://" + window.location.host + "/lobby.html";
+		});
 		this.fruits = [];
 		this.snakes = [];
 		let canvas = document.getElementById('playground');
@@ -112,22 +115,22 @@ class Game {
 					case 37:
 						if (this.direction != 'east')
 							this.setDirection('west');
-							e.preventDefault();
+						e.preventDefault();
 						break;
 					case 38:
 						if (this.direction != 'south')
 							this.setDirection('north');
-							e.preventDefault();
+						e.preventDefault();
 						break;
 					case 39:
 						if (this.direction != 'west')
 							this.setDirection('east');
-							e.preventDefault();
+						e.preventDefault();
 						break;
 					case 40:
 						if (this.direction != 'north')
 							this.setDirection('south');
-							e.preventDefault();
+						e.preventDefault();
 						break;
 					case 13:
 						InputField = document.getElementById('inputField');
@@ -267,8 +270,8 @@ class Game {
 						$("#Jugadores").append('<h  class ="console" style="background:' + m.color + ';">' + m.nombre + ":" + m.puntos + "</h>");
 
 					}
-                                        var time = packet.Tiempo;
-                                        $("#time").html("<p>"+time+"</p>");
+					var time = packet.Tiempo;
+					$("#time").html("<p>" + time + "</p>");
 					break;
 				case 'join':
 					for (var j = 0; j < packet.data.length; j++) {

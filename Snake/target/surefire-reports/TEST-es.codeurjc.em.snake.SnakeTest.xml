@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="es.codeurjc.em.snake.SnakeTest" time="2.679" tests="3" errors="0" skipped="0" failures="0">
+<testsuite name="es.codeurjc.em.snake.SnakeTest" time="21.681" tests="1" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk1.8.0_111\jre\bin"/>
@@ -43,7 +43,7 @@
     <property name="java.vm.specification.version" value="1.8"/>
     <property name="sun.arch.data.model" value="64"/>
     <property name="java.home" value="C:\Program Files\Java\jdk1.8.0_111\jre"/>
-    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher -Dmaven.ext.class.path=D:\Archivos de programa\NetBeans 8.2\java\maven-nblib\netbeans-eventspy.jar -Dfile.encoding=UTF-8 install"/>
+    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher -Dmaven.ext.class.path=D:\Archivos de programa\NetBeans 8.2\java\maven-nblib\netbeans-eventspy.jar -Dfile.encoding=UTF-8 clean install"/>
     <property name="java.specification.vendor" value="Oracle Corporation"/>
     <property name="user.language" value="es"/>
     <property name="awt.toolkit" value="sun.awt.windows.WToolkit"/>
@@ -60,7 +60,5 @@
     <property name="sun.desktop" value="windows"/>
     <property name="sun.cpu.isalist" value="amd64"/>
   </properties>
-  <testcase name="testConnection" classname="es.codeurjc.em.snake.SnakeTest" time="0.225"/>
-  <testcase name="testJoinLobby" classname="es.codeurjc.em.snake.SnakeTest" time="1.009"/>
-  <testcase name="testCreateGame" classname="es.codeurjc.em.snake.SnakeTest" time="1.445"/>
+  <testcase name="testCarga" classname="es.codeurjc.em.snake.SnakeTest" time="21.681"/>
 </testsuite>

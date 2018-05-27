@@ -11,13 +11,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import static java.util.Collections.list;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -40,23 +37,20 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 @RequestMapping("/games")
 public class SnakeHandler extends TextWebSocketHandler {
 
-    private static final String SNAKE_ATT = "snake";
-
     private AtomicInteger snakeIds = new AtomicInteger(0);
-
-    private SnakeGame snakeGame = new SnakeGame(new GameType("global", GameType.Dificultad.Dificil, GameType.Type.Lobby, -1), 0);
-
     private AtomicInteger gameIds = new AtomicInteger(0);
 
     private Map<Integer, SnakeGame> games = new ConcurrentHashMap<>();
-
     private Map<String, String> users = new ConcurrentHashMap<>();
+    public static Map<Type, ConcurrentHashMap<String, Long>> Puntuaciones = new ConcurrentHashMap<>();
+
+    private SnakeGame snakeGame = new SnakeGame(new GameType("global", GameType.Dificultad.Dificil, GameType.Type.Lobby, -1), 0);
+
+    private static final String SNAKE_ATT = "snake";
 
     public static final Gson JSON = new Gson();
 
     private ReentrantReadWriteLock InOut = new ReentrantReadWriteLock();
-
-    public static Map<Type, ConcurrentHashMap<String, Long>> Puntuaciones = new ConcurrentHashMap<>();
 
     public SnakeHandler() {
 
@@ -70,7 +64,7 @@ public class SnakeHandler extends TextWebSocketHandler {
         List<String> list = null;
 
         try {
-            f = new File("src/main/resources/static/Classic.json");
+            f = new File("data/Classic.json");
             fr = new FileReader(f);
             br = new BufferedReader(fr);
             list = JSON.fromJson(br, List.class);
@@ -89,7 +83,7 @@ public class SnakeHandler extends TextWebSocketHandler {
         }
 
         try {
-            f = new File("src/main/resources/static/Arcade.json");
+            f = new File("data/Arcade.json");
             fr = new FileReader(f);
             br = new BufferedReader(fr);
             list = JSON.fromJson(br, List.class);
@@ -108,7 +102,7 @@ public class SnakeHandler extends TextWebSocketHandler {
         }
 
         try {
-            f = new File("src/main/resources/static/Users.json");
+            f = new File("data/Users.json");
             fr = new FileReader(f);
             br = new BufferedReader(fr);
             list = JSON.fromJson(br, List.class);
@@ -137,17 +131,6 @@ public class SnakeHandler extends TextWebSocketHandler {
 
         session.getAttributes().put(SNAKE_ATT, s);
 
-        /*snakeGame.addSnake(s);
-
-        StringBuilder sb = new StringBuilder();
-        for (Snake snake : snakeGame.getSnakes()) {
-            sb.append(String.format("{\"id\": %d, \"color\": \"%s\"}", snake.getId(), snake.getHexColor()));
-            sb.append(',');
-        }
-        sb.deleteCharAt(sb.length() - 1);
-        String msg = String.format("{\"type\": \"join\",\"data\":[%s]}", sb.toString());
-
-        snakeGame.broadcast(msg);*/
     }
 
     @Override
@@ -161,79 +144,88 @@ public class SnakeHandler extends TextWebSocketHandler {
 
             Message m = JSON.fromJson(payload, Message.class);
 
-            if (m.getMessageType().equals("ping")) {
-                return;
-            }
-
             Snake s = (Snake) session.getAttributes().get(SNAKE_ATT);
+            
+            
 
-            if (m.getMessageType().equals("connect")) {
+            switch (m.getMessageType()) {
+                case "ping":
+                    break;
+                case "connect":
 
-                session.getAttributes().put("Thread", Thread.currentThread());
+                    session.getAttributes().put("Thread", Thread.currentThread());
+                    s.setName(m.getName());
+                    
+                    SnakeGame game;
+                    
+                    InOut.readLock().lock();
+                    game = games.get(m.getId());
+                    if (game != null) {
+                        try {
+                            game.addSnake(s);
+                            InOut.readLock().unlock();
+                            session.getAttributes().put("gameId", m.getId());
+                            StringBuilder sb = new StringBuilder();
+                            for (Snake snake : game.getSnakes()) {
+                                sb.append(String.format("{\"id\": %d, \"color\": \"%s\", \"name\":\"%s\"}", snake.getId(), snake.getHexColor(), snake.getName()));
+                                sb.append(',');
+                            }
+                            sb.deleteCharAt(sb.length() - 1);
+                            String msg = String.format("{\"type\": \"join\",\"data\":[%s]}", sb.toString());
+                            game.broadcast(msg);
+                            return;
 
-                s.setName(m.getName());
-                InOut.readLock().lock();
-                SnakeGame game = games.get(m.getId());
-                if (game != null) {
-                    try {
-                        game.addSnake(s);
-                        InOut.readLock().unlock();
-                        session.getAttributes().put("gameId", m.getId());
-                        StringBuilder sb = new StringBuilder();
-                        for (Snake snake : game.getSnakes()) {
-                            sb.append(String.format("{\"id\": %d, \"color\": \"%s\", \"name\":\"%s\"}", snake.getId(), snake.getHexColor(), snake.getName()));
-                            sb.append(',');
+                        } catch (InterruptedException e) {
+                            InOut.readLock().unlock();
+                            String failed = String.format("{\"type\": \"failed-join\",\"data\":\"You couldn't connect to game %d\"}", m.getId());
+                            session.sendMessage(new TextMessage(failed));
+                            break;
                         }
-                        sb.deleteCharAt(sb.length() - 1);
-                        String msg = String.format("{\"type\": \"join\",\"data\":[%s]}", sb.toString());
-                        game.broadcast(msg);
-                        return;
-
-                    } catch (InterruptedException e) {
+                    } else {
                         InOut.readLock().unlock();
                         String failed = String.format("{\"type\": \"failed-join\",\"data\":\"You couldn't connect to game %d\"}", m.getId());
                         session.sendMessage(new TextMessage(failed));
-                        return;
                     }
-                } else {
-                    InOut.readLock().unlock();
-                    String failed = String.format("{\"type\": \"failed-join\",\"data\":\"You couldn't connect to game %d\"}", m.getId());
-                    session.sendMessage(new TextMessage(failed));
-                    return;
-                }
-            }
-            if (m.getMessageType().equals("chat")) {
-                SnakeGame game;
-                if (m.getId() > 0) {
-                    game = games.get(m.getId());
-                } else {
-                    game = snakeGame;
-                }
-                StringBuilder sb = new StringBuilder();
-                sb.append(String.format("{\"name\": \"%s\", \"message\": \"%s\"}", s.getName(), m.getDirection()));
-                String msg = String.format("{\"type\": \"chat\",\"data\":%s}", sb.toString());
 
-                game.broadcast(msg);
-                return;
-            }
+                    break;
+                case "chat":
 
-            if (m.getMessageType().equals("Start")) {
-                SnakeGame game;
-                game = games.get(m.getId());
-                if (game.getNumSnakes() > 1) {
-                    game.startTimer();
-                }
-                return;
-            }
+                    SnakeGame game2;
 
-            if (m.getMessageType().equals("Disconnect")) {
-                Thread t = (Thread) session.getAttributes().get("Thread");
-                t.interrupt();
-                return;
-            }
+                    if (m.getId() > 0) {
+                        game2 = games.get(m.getId());
+                    } else {
+                        game2 = snakeGame;
+                    }
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(String.format("{\"name\": \"%s\", \"message\": \"%s\"}", s.getName(), m.getDirection()));
+                    String msg = String.format("{\"type\": \"chat\",\"data\":%s}", sb.toString());
 
-            Direction d = Direction.valueOf(m.getDirection().toUpperCase());
-            s.setDirection(d);
+                    game2.broadcast(msg);
+
+                    break;
+
+                case "Disconnect":
+
+                    Thread t = (Thread) session.getAttributes().get("Thread");
+                    t.interrupt();
+
+                    break;
+                case "Start":
+
+                    SnakeGame game3;
+                    game3 = games.get(m.getId());
+                    if (game3.getNumSnakes() > 1) {
+                        game3.startTimer();
+                    }
+
+                    break;
+
+                default:
+                    Direction d = Direction.valueOf(m.getDirection().toUpperCase());
+                    s.setDirection(d);
+                    break;
+            }
 
         } catch (Exception e) {
             InOut.readLock().unlock();
@@ -253,34 +245,36 @@ public class SnakeHandler extends TextWebSocketHandler {
             int id = (int) session.getAttributes().get("gameId");
 
             SnakeGame game = games.get(id);
-            if (game != null){
-            game.removeSnake(s);
+            
+            if (game != null) {
+                game.removeSnake(s);
 
-            InOut.writeLock().lock();
-            try {
-                
-                synchronized (game) {
-                    if (!game.ganada.get() && (game.getNumSnakes() > 0 || game.getName().equals("global"))) {
+                InOut.writeLock().lock();
+                try {
 
-                        String msg = String.format("{\"type\": \"leave\", \"id\": %d}", s.getId());
+                    synchronized (game) {
+                        if (!game.ganada.get() && (game.getNumSnakes() > 0 || game.getName().equals("global"))) {
 
-                        game.broadcast(msg);
+                            String msg = String.format("{\"type\": \"leave\", \"id\": %d}", s.getId());
 
-                    } else {
-                        games.remove(id);
+                            game.broadcast(msg);
+
+                        } else {
+                            games.remove(id);
+                        }
                     }
+                } finally {
+                    InOut.writeLock().unlock();
                 }
-            } finally {
-                InOut.writeLock().unlock();
             }
         }
-      }
         //snakeIds.decrementAndGet();
     }
 
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public int PostGame(@RequestBody String tstring) {
+    public int PostGame(@RequestBody String tstring
+    ) {
 
         GameType t = JSON.fromJson(tstring, GameType.class
         );
@@ -311,7 +305,8 @@ public class SnakeHandler extends TextWebSocketHandler {
 
     @PostMapping("/names")
     @ResponseStatus(HttpStatus.CREATED)
-    public int PostName(@RequestBody String user) {
+    public int PostName(@RequestBody String user
+    ) {
 
         user = user.replace("=", "");
 
@@ -327,7 +322,7 @@ public class SnakeHandler extends TextWebSocketHandler {
             FileWriter fw = null;
             PrintWriter pw = null;
             try {
-                f = new File("src/main/resources/static/Users.json");
+                f = new File("data/Users.json");
                 fw = new FileWriter(f);
                 pw = new PrintWriter(fw);
                 List<String> list = new LinkedList<>();
@@ -350,7 +345,8 @@ public class SnakeHandler extends TextWebSocketHandler {
     }
 
     @GetMapping("/names/{user}")
-    public int GetLog(@PathVariable String user) {
+    public int GetLog(@PathVariable String user
+    ) {
 
         user.replace("=", "");
 
@@ -399,7 +395,8 @@ public class SnakeHandler extends TextWebSocketHandler {
     }
 
     @GetMapping("/Puntuaciones/{tipo}")
-    public List<String> GetPuntuaciones(@PathVariable Type tipo) {
+    public List<String> GetPuntuaciones(@PathVariable Type tipo
+    ) {
         List<String> list = new LinkedList<>();
 
         for (String name : Puntuaciones.get(tipo).keySet()) {

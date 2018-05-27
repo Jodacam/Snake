@@ -32,7 +32,11 @@ Puntuaciones.log = (function (message) {
     var player = document.getElementById('points');
     var p = document.createElement('p');
     p.style.wordWrap = 'break-word';
-    p.innerHTML = message;
+    if(tipoPunct === "Arcade"){
+    p.innerHTML = message+" s";
+    }else{
+        p.innerHTML = message+" pts";
+    }
     player.appendChild(p);
     player.scrollTop = player.scrollHeight;
 });
@@ -51,13 +55,13 @@ function CargarPartidas(e) {
                 let newTemplate = template.replace("%Name", n[0]);
                 newTemplate = newTemplate.replace("%Jugadores", n[1] + "/" + n[5]);
                 newTemplate = newTemplate.replace("%Id", "'" + n[2] + "'");
-                if(n[3]==="Dificil"){
+                if (n[3] === "Dificil") {
                     newTemplate = newTemplate.replace("%Dificultad", "Hard");
                     newTemplate = newTemplate.replace("white", "lightcoral");
-                }else if(n[3]==="Normal"){
+                } else if (n[3] === "Normal") {
                     newTemplate = newTemplate.replace("%Dificultad", "Normal");
                     newTemplate = newTemplate.replace("white", "lightgreen");
-                }else if(n[3]==="Facil"){
+                } else if (n[3] === "Facil") {
                     newTemplate = newTemplate.replace("%Dificultad", "Easy");
                     newTemplate = newTemplate.replace("white", "lightblue");
                 }
@@ -162,24 +166,26 @@ $(function () {
             Tipo: tipo,
             jugadores: $("#Jugadores").val()
         };
+        if (n.name != "") {
+            $.ajax({
+                method: "POST",
+                url: "http://" + window.location.host + "/games/",
+                data: JSON.stringify(n),
+                contentType: "application/json"
+            })
+                .done(function (msg) {
+                    window.sessionStorage.setItem("Starter", true);
+                    window.sessionStorage.setItem("game", msg);
+                    window.location = "http://" + window.location.host + "/game.html";
 
-        $.ajax({
-            method: "POST",
-            url: "http://" + window.location.host + "/games/",
-            data: JSON.stringify(n),
-            contentType: "application/json"
-        })
-            .done(function (msg) {
-                window.sessionStorage.setItem("Starter", true);
-                window.sessionStorage.setItem("game", msg);
-                window.location = "http://" + window.location.host + "/game.html";
-
-            });
+                });
+        }
 
     });
 
     $("#Recargar").click(CargarPartidas);
-    window.setInterval(CargarPartidas, 200);
+    window.setInterval(CargarPartidas, 1000);
+
     $("#UnirseAletorio").click(function (e) {
         $.ajax({
             method: "GET",
@@ -189,18 +195,16 @@ $(function () {
                 if (msg >= 1) {
                     window.sessionStorage.setItem("game", msg);
                     window.location = "http://" + window.location.host + "/game.html";
-                } else{
+                } else {
                     alert("No hay ninguna partida");
                 }
             });
-
-
     });
 
     window.setInterval(function () {
         $.ajax({
             method: "GET",
-            url: "http://" + window.location.host + "/games/Puntuaciones/"+tipoPunct,
+            url: "http://" + window.location.host + "/games/Puntuaciones/" + tipoPunct,
         })
             .done(function (msg) {
                 $("#points").html("");
@@ -213,12 +217,12 @@ $(function () {
 
     }, 200);
 
-    $("#Change-Arcade").click(function(e){
+    $("#Change-Arcade").click(function (e) {
         tipoPunct = "Arcade";
         $("#Hall").html("Hall of Fame(Arcade)");
     });
 
-    $("#Change-Classic").click(function(e){
+    $("#Change-Classic").click(function (e) {
         tipoPunct = "Classic";
         $("#Hall").html("Hall of Fame(Classic)");
     });
