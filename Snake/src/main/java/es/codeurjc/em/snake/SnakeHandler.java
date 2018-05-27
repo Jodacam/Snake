@@ -371,7 +371,7 @@ public class SnakeHandler extends TextWebSocketHandler {
     @GetMapping("/Random")
     public int GetRandomGame() {
         int number = -1;
-        if(games.values().size() > 2){
+        if(games.values().size() >= 2){
         Collection<SnakeGame> ActualGames = games.values();
         List<SnakeGame> list = new ArrayList<SnakeGame>(ActualGames);
         list.remove(0);

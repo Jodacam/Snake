@@ -38,7 +38,7 @@ Puntuaciones.log = (function (message) {
         p.innerHTML = message+" pts";
     }
     while (points.childNodes.length > 9) {
-		points.removeChild(console.lastChild);
+		points.removeChild(points.lastChild);
 	}
     points.appendChild(p);
     points.scrollTop = points.scrollHeight;
