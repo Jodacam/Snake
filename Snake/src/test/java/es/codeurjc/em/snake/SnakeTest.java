@@ -28,151 +28,140 @@ public class SnakeTest {
         Application.main(new String[]{"--server.port=9000"});
     }
 
-//    @Test
-//    public void testConnection() throws Exception {
-//
-//        WebSocketClient wsc = new WebSocketClient();
-//        wsc.connect("ws://127.0.0.1:9000/snake");
-//        wsc.disconnect();
-//    }
-//
-//    @Test
-//    public void testJoinLobby() throws Exception {
-//
-//        AtomicReference<String> firstMsg = new AtomicReference<String>();
-//
-//        WebSocketClient wsc = new WebSocketClient();
-//        wsc.onMessage((session, msg) -> {
-//            System.out.println("TestMessage: " + msg);
-//            firstMsg.compareAndSet(null, msg);
-//        });
-//
-//        wsc.connect("ws://127.0.0.1:9000/snake");
-//
-//        wsc.onOpen(((session) -> {            
-//            try {
-//                wsc.sendMessage(" \"id\":0, \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null");
-//            } catch (IOException ex) {
-//                Logger.getLogger(SnakeTest.class.getName()).log(Level.SEVERE, null, ex);
-//            }           
-//        }));
-//        
-//        
-//        
-//        System.out.println("Connected");
-//        wsc.sendMessage(" {\"id\":0, \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null}");
-//        
-//        
-//        Thread.sleep(1000);
-//
-//        String msg = firstMsg.get();
-//
-//        assertTrue("The fist message should contain 'join', but it is " + msg, msg.contains("join"));
-//
-//        wsc.disconnect();
-//    }
-//
-//    
-//    
-//        @Test
-//        public void testCreateGame() throws Exception {
-//
-//        AtomicReference<String> firstMsg = new AtomicReference<String>();
-//
-//                
-//        HttpResponse<String> request = Unirest.post("http://127.0.0.1:9000/games/").body(" {\"name\":\"Prueba1\",\n" +
-//"            \"dificultad\": \"Normal\",\n" +
-//"            \"Tipo\": \"Arcade\",\n" +
-//"            \"jugadores\": 2}").asString();
-//        int Partida =Integer.parseInt(  request.getBody());
-//        
-//        assertTrue("El id de partida tiene que ser mayor a 1", Partida > 0);
-//        
-//        WebSocketClient wsc = new WebSocketClient();
-//        
-//        wsc.onMessage((session, msg) -> {
-//            System.out.println("TestMessage: " + msg);
-//            firstMsg.compareAndSet(null, msg);
-//        });
-//        
-//        
-//        
-//        
-//        wsc.connect("ws://127.0.0.1:9000/snake");
-//
-//        wsc.onOpen(((session) -> {            
-//            try {
-//                wsc.sendMessage(" \"id\":"+Partida+", \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null");
-//            } catch (IOException ex) {
-//                Logger.getLogger(SnakeTest.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-//            
-//            
-//        }));
-//        System.out.println("Connected");
-//          wsc.sendMessage(" {\"id\":"+Partida+", \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null}");
-//        
-//        
-//        Thread.sleep(1000);
-//
-//        String msg = firstMsg.get();
-//
-//        assertTrue("The fist message should contain 'join', but it is " + msg, msg.contains("join"));
-//
-//        wsc.disconnect();
-//    }
-//        
-//        
-//    @Test
-//     public void testPartida() throws Exception{
-//         WebSocketClient[] Jugadores = new WebSocketClient[4];
-//         for(int i = 0; i<4; i++){
-//             WebSocketClient c = new WebSocketClient();
-//             c.onMessage((session, msg) ->{
-//                     if(msg.contains("update")){
-//                      System.out.println("Esto es un update con : "+msg);
-//                     }else 
-//                       if (msg.contains("join")){
-//                          System.out.println("Esto es un join con : "+msg);
-//                       } else
-//                           if(msg.contains("endGame")){
-//                         try {
-//                             c.disconnect();                            
-//                         } catch (IOException ex) {
-//                             Logger.getLogger(SnakeTest.class.getName()).log(Level.SEVERE, null, ex);
-//                         }
-//                           }
-//             });
-//             c.connect("ws://127.0.0.1:9000/snake");
-//             Jugadores[i] = c;
-//             
-//         }
-//          HttpResponse<String> request = Unirest.post("http://127.0.0.1:9000/games/").body(" {\"name\":\"PruebaPartida\",\n" +
-//"            \"dificultad\": \"Normal\",\n" +
-//"            \"Tipo\": \"Classic\",\n" +
-//"            \"jugadores\": 4}").asString();
-//             int Partida =Integer.parseInt(  request.getBody());
-//        
-//             assertTrue("El id de partida tiene que ser mayor a 1", Partida > 0);
-//             
-//             for(WebSocketClient c : Jugadores){
-//                 new Thread(()->{
-//                     try {
-//                         JugarPartida(100000, c,Partida);
-//                     } catch (Exception ex) {
-//                         Logger.getLogger(SnakeTest.class.getName()).log(Level.SEVERE, null, ex);
-//                     }
-//                 }).start();                               
-//             }
-//             Thread.sleep(65000);
-//                                               
-//     }
+    @Test
+    public void testConnection() throws Exception {
+
+        WebSocketClient wsc = new WebSocketClient();
+        wsc.connect("ws://127.0.0.1:9000/snake");
+        wsc.disconnect();
+    }
+
+    @Test
+    public void testJoinLobby() throws Exception {
+
+        AtomicReference<String> firstMsg = new AtomicReference<String>();
+
+        WebSocketClient wsc = new WebSocketClient();
+        wsc.onMessage((session, msg) -> {
+            System.out.println("TestMessage: " + msg);
+            firstMsg.compareAndSet(null, msg);
+        });
+
+        wsc.connect("ws://127.0.0.1:9000/snake");
+                      
+        System.out.println("Connected");
+        
+        wsc.sendMessage(" {\"id\":0, \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null}");
+        
+        
+        Thread.sleep(1000);
+
+        String msg = firstMsg.get();
+
+        assertTrue("The fist message should contain 'join', but it is " + msg, msg.contains("join"));
+
+        wsc.disconnect();
+    }
+
+    
+    
+        @Test
+        public void testCreateGame() throws Exception {
+
+        AtomicReference<String> firstMsg = new AtomicReference<String>();
+
+                
+        HttpResponse<String> request = Unirest.post("http://127.0.0.1:9000/games/").body(" {\"name\":\"Prueba1\",\n" +
+"            \"dificultad\": \"Normal\",\n" +
+"            \"Tipo\": \"Arcade\",\n" +
+"            \"jugadores\": 2}").asString();
+        int Partida =Integer.parseInt(  request.getBody());
+        
+        assertTrue("El id de partida tiene que ser mayor a 1", Partida > 0);
+        
+        WebSocketClient wsc = new WebSocketClient();
+        
+        wsc.onMessage((session, msg) -> {
+            System.out.println("TestMessage: " + msg);
+            firstMsg.compareAndSet(null, msg);
+        });
+        
+        
+        
+        
+        wsc.connect("ws://127.0.0.1:9000/snake");
+
+        System.out.println("Connected");
+        wsc.sendMessage(" {\"id\":"+Partida+", \"messageType\": \"connect\", \"name\": \"name\", \"direction\": null}");
+        
+        
+        Thread.sleep(1000);
+
+        String msg = firstMsg.get();
+
+        assertTrue("The fist message should contain 'join', but it is " + msg, msg.contains("join"));
+
+        wsc.disconnect();
+    }
+        
+        
+    @Test
+     public void testPartida() throws Exception{
+         WebSocketClient[] Jugadores = new WebSocketClient[4];
+         for(int i = 0; i<4; i++){
+             WebSocketClient c = new WebSocketClient();
+             c.onMessage((session, msg) ->{
+                     if(msg.contains("update")){
+                      //System.out.println("Esto es un update con : "+msg);
+                     }else 
+                       if (msg.contains("join")){
+                          System.out.println("Esto es un join con : "+msg);
+                       } else
+                           if(msg.contains("endGame")){
+                         try {
+                             c.disconnect();                            
+                         } catch (IOException ex) {
+                             Logger.getLogger(SnakeTest.class.getName()).log(Level.SEVERE, null, ex);
+                         }
+                           }
+             });
+             c.connect("ws://127.0.0.1:9000/snake");
+             Jugadores[i] = c;
+             
+         }
+          HttpResponse<String> request = Unirest.post("http://127.0.0.1:9000/games/").body(" {\"name\":\"PruebaPartida\",\n" +
+"            \"dificultad\": \"Normal\",\n" +
+"            \"Tipo\": \"Classic\",\n" +
+"            \"jugadores\": 4}").asString();
+             
+             int Partida = Integer.parseInt(  request.getBody());
+        
+             assertTrue("El id de partida tiene que ser mayor a 1", Partida > 0);
+             
+             for(WebSocketClient c : Jugadores){
+                 new Thread(()->{
+                     try {
+                         JugarPartida(61000, c,Partida);
+                     } catch (Exception ex) {
+                         Logger.getLogger(SnakeTest.class.getName()).log(Level.SEVERE, null, ex);
+                     }
+                 }).start();                               
+             }
+             
+             Thread.sleep(65000);
+                                               
+     }
 //     
-     public void JugarPartida(long Time, WebSocketClient client,int id) throws IOException, InterruptedException{
+     public void JugarPartida(long Time, WebSocketClient client,int id) throws Exception{
          client.sendMessage(" {\"id\":"+id+", \"messageType\": \"connect\", \"name\": +\""+Thread.currentThread().getName()+"\", \"direction\": null}");  
          System.out.println(Thread.currentThread().getName()+ " EntraEn la partida");
          Thread.sleep(Time);
          System.out.println(Thread.currentThread().getName()+ " Se sale de la partida");
+         
+         HttpResponse<String> requestGet = Unirest.get("http://127.0.0.1:9000/games/Puntuaciones/Classic").asString();
+         String respon = requestGet.getBody();
+         assertTrue("No ha llegado nada", respon !=null);
+         System.out.println(respon);
          client.disconnect();
      }
       
@@ -181,53 +170,7 @@ public class SnakeTest {
 //     
 //     
 //     
-//     @Test
-//     public void testPartidaAntes() throws Exception{
-//         WebSocketClient[] Jugadores = new WebSocketClient[4];
-//         for(int i = 0; i<4; i++){
-//             WebSocketClient c = new WebSocketClient();
-//             c.onMessage((session, msg) ->{
-//                     if(msg.contains("update")){
-//                      System.out.println("Esto es un update con : "+msg);
-//                     }else 
-//                       if (msg.contains("join")){
-//                          System.out.println("Esto es un join con : "+msg);
-//                       } else
-//                           if(msg.contains("endGame")){
-//                         try {
-//                             c.disconnect();                            
-//                         } catch (IOException ex) {
-//                             Logger.getLogger(SnakeTest.class.getName()).log(Level.SEVERE, null, ex);
-//                         }
-//                           }
-//             });
-//             c.connect("ws://127.0.0.1:9000/snake");
-//             Jugadores[i] = c;
-//             
-//         }
-//          HttpResponse<String> request = Unirest.post("http://127.0.0.1:9000/games/").body(" {\"name\":\"PruebaEmpezarAntes\",\n" +
-//"            \"dificultad\": \"Normal\",\n" +
-//"            \"Tipo\": \"Classic\",\n" +
-//"            \"jugadores\": 3}").asString();
-//         int Partida =Integer.parseInt(  request.getBody());
-//        
-//             assertTrue("El id de partida tiene que ser mayor a 1", Partida > 0);
-//             
-//             for(int i = 0; i<2; i++){
-//                 WebSocketClient c = Jugadores[i];
-//                 new Thread(()->{
-//                     try {
-//                         JugarPartida(100000, c,Partida);
-//                     } catch (Exception ex) {
-//                         Logger.getLogger(SnakeTest.class.getName()).log(Level.SEVERE, null, ex);
-//                     }
-//                 }).start();                               
-//             }                          
-//             Thread.sleep(1000);
-//             Jugadores[0].sendMessage(" {\"id\":"+Partida+", \"messageType\": \"Start\", \"name\": +\""+Thread.currentThread().getName()+"\", \"direction\": null}");
-//             Thread.sleep(1000);            
-//                                               
-//     }
+
      
      
      
@@ -286,6 +229,10 @@ public class SnakeTest {
             }
             
             Thread.sleep(20000);
+            
+             
+            
+            
      }
      
      
