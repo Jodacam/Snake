@@ -29,16 +29,19 @@ Players.log = (function (message) {
 
 
 Puntuaciones.log = (function (message) {
-    var player = document.getElementById('points');
+    var points = document.getElementById('points');
     var p = document.createElement('p');
     p.style.wordWrap = 'break-word';
     if(tipoPunct === "Arcade"){
-    p.innerHTML = message+" s";
+        p.innerHTML = message+" s";
     }else{
         p.innerHTML = message+" pts";
     }
-    player.appendChild(p);
-    player.scrollTop = player.scrollHeight;
+    while (points.childNodes.length > 9) {
+		points.removeChild(console.lastChild);
+	}
+    points.appendChild(p);
+    points.scrollTop = points.scrollHeight;
 });
 
 function CargarPartidas(e) {
