@@ -78,6 +78,10 @@ function CargarPartidas(e) {
 
 
 $(function () {
+    if(window.sessionStorage.getItem("name") === null){
+        window.location = "http://" + window.location.host + "/index.html";
+    }
+
     window.sessionStorage.setItem("Starter", false);
     socket = new WebSocket('ws://' + window.location.host + '/snake');
 

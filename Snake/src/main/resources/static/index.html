@@ -37,8 +37,8 @@ and open the template in the editor.
             var code = e.keyCode;
             if (code === 13) {
 
-                var name = $("#inputField").val();
-                var password = $("#inputPassword").val();
+                var name = $("#inputField").val().replace(/ /g, '');
+                var password = $("#inputPassword").val().replace(/ /g, '');
                 if (name === ""||password === "") {
                     window.alert("User empty or password empty");
                 } else {
@@ -65,8 +65,8 @@ and open the template in the editor.
             }
         })
         $("#Register").click(function () {
-            var name = $("#inputField").val();
-            var password = $("#inputPassword").val();
+            var name = $("#inputField").val().replace(/ /g, '');
+            var password = $("#inputPassword").val().replace(/ /g, '');
             if (name === ""||password === "") {
                 window.alert("User empty or empty");
             } else {
@@ -90,8 +90,8 @@ and open the template in the editor.
             }
         })
         $("#Continue").click(function () {
-            var name = $("#inputField").val();
-            var password = $("#inputPassword").val();
+            var name = $("#inputField").val().replace(/ /g, '');
+            var password = $("#inputPassword").val().replace(/ /g, '');
             if (name === ""||password === "") {
                 window.alert("User empty or password empty");
             } else {

@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: es.codeurjc.em.snake.SnakeTest
 -------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 92.724 sec - in es.codeurjc.em.snake.SnakeTest
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 91.854 sec - in es.codeurjc.em.snake.SnakeTest
