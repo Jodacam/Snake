@@ -73,6 +73,10 @@ class Game {
 	}
 
 	initialize() {
+		if(window.sessionStorage.getItem("name") === null){
+			window.location = "http://" + window.location.host + "/index.html";
+		}
+
 		let starter = window.sessionStorage.getItem("Starter");
 		if (starter === "false") {
 			$("#Comenzar").hide();

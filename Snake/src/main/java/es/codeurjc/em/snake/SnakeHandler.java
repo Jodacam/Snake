@@ -75,72 +75,13 @@ public class SnakeHandler extends TextWebSocketHandler {
         Puntuaciones.put(Type.Classic, new ConcurrentHashMap<>());
         games.put(gameIds.getAndIncrement(), snakeGame);
 
+        LoadFilesPunc("Classic", Puntuaciones.get(Type.Classic));
+        LoadFilesPunc("Arcade", Puntuaciones.get(Type.Arcade));
         
         // Leemos los archivos Arcade.json y Classic.json de la carpeta Data. Ahi estan las Puntuaciones. Al estar en el constructor aun no hay nada en el servidor asi que funcionara
-        File f = null;
-        FileReader fr = null;
-        BufferedReader br = null;
-        List<String> list = null;
-
-        try {
-            f = new File("data/Classic.json");
-            fr = new FileReader(f);
-            br = new BufferedReader(fr);
-            list = JSON.fromJson(br, List.class);
-
-            if (list != null) {
-                for (String punt : list) {
-                    Puntuaciones.get(Type.Classic).put(punt.split(":")[0], Long.parseLong(punt.split(":")[1]));
-                }
-            }
-
-            br.close();
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        try {
-            f = new File("data/Arcade.json");
-            fr = new FileReader(f);
-            br = new BufferedReader(fr);
-            list = JSON.fromJson(br, List.class);
-
-            if (list != null) {
-                for (String punt : list) {
-                    Puntuaciones.get(Type.Arcade).put(punt.split(":")[0], Long.parseLong(punt.split(":")[1]));
-                }
-            }
-
-            br.close();
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
+        LoadFilesUsers("Users");
         
         //Leemos el archivo de los Usuarios Registrados
-        try {
-            f = new File("data/Users.json");
-            fr = new FileReader(f);
-            br = new BufferedReader(fr);
-            list = JSON.fromJson(br, List.class);
-            if (list != null) {
-                for (String n : list) {
-                    users.put(n.split(":")[0], n.split(":")[1]);
-                }
-            }
-
-            br.close();
-
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
     }
 
     @Override
@@ -464,6 +405,58 @@ public class SnakeHandler extends TextWebSocketHandler {
                 break;
         }
         return list;
+    }
+    
+    private void LoadFilesPunc(String fileType,ConcurrentHashMap map){
+        File f = null;
+        FileReader fr = null;
+        BufferedReader br = null;
+        List<String> list = null;
+
+        try {
+            f = new File("data/"+fileType+".json");
+            fr = new FileReader(f);
+            br = new BufferedReader(fr);
+            list = JSON.fromJson(br, List.class);
+
+            if (list != null) {
+                for (String punt : list) {
+                    map.put(punt.split(":")[0], Long.parseLong(punt.split(":")[1]));
+                }
+            }
+
+            br.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    private void LoadFilesUsers(String fileType){
+        File f = null;
+        FileReader fr = null;
+        BufferedReader br = null;
+        List<String> list = null;
+
+        try {
+            f = new File("data/Users.json");
+            fr = new FileReader(f);
+            br = new BufferedReader(fr);
+            list = JSON.fromJson(br, List.class);
+            if (list != null) {
+                for (String n : list) {
+                    users.put(n.split(":")[0], n.split(":")[1]);
+                }
+            }
+
+            br.close();
+
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(SnakeHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
 }

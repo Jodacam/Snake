@@ -2,10 +2,10 @@ package es.codeurjc.em.snake;
 
 import es.codeurjc.em.snake.GameType.Type;
 import static es.codeurjc.em.snake.SnakeHandler.Puntuaciones;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,12 +18,9 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-<<<<<<< HEAD
-import java.lang.InterruptedException;
 import java.util.concurrent.atomic.AtomicBoolean;
-=======
-import sun.font.Font2D;
->>>>>>> bec15902c8c39112a165a8a9a6b0032e78446acb
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SnakeGame {
 
@@ -40,6 +37,9 @@ public class SnakeGame {
     private long Tiempo;
     private String name;
 
+    
+    
+    //Cola de los huecos libres para comprobar si puedes entrar en la partida
     private BlockingQueue<Integer> Huecos;
 
     private volatile int id;
@@ -47,7 +47,9 @@ public class SnakeGame {
     private volatile boolean started = false;
 
     public AtomicBoolean ganada;
+
     public SnakeGame(GameType g, int id) {
+        //Inicializamos las variables
         ganada = new AtomicBoolean(false);
         Tiempo = 0;
         this.name = g.getName();
@@ -63,7 +65,11 @@ public class SnakeGame {
 
     public void addSnake(Snake snake) throws InterruptedException {
 
+        
+        //Metemos una serpiente en la partida. Si es el Lobby nos saltamos el tener que esperar en la cola
         if (Tipo != Type.Lobby) {
+            //Intentamos obtener nuestro hueco en la partida por 5 segundos, si no lo conseguimos lanzamos la excepcion para que el TryCach de SnakeHandler se encargue de mandar
+            // El Failed-Join
             Integer i = Huecos.poll(5, TimeUnit.SECONDS);
             if (i == null) {
                 throw new InterruptedException();
@@ -75,6 +81,8 @@ public class SnakeGame {
 
         int count = numSnakes.getAndIncrement();
 
+        
+        //Siempre que la partida no este empezada y llegamos a los jugadores de la partida
         if (count == jugadoresMinimos - 1 && Tipo != Type.Lobby && !started) {
             startTimer();
 
@@ -89,17 +97,19 @@ public class SnakeGame {
         return snakes.values();
     }
 
+    
+    //Eliminamos una serpiente de la partida.
     public void removeSnake(Snake snake) throws InterruptedException {
 
         synchronized (snake) {
-            System.out.println("Serpiente Borrada en partida" + this.getName());
+            System.out.println("Serpiente Borrada en partida " + this.getName());
             snakes.remove(Integer.valueOf(snake.getId()));
         }
-        
+        //Reducimos el contador de serpientes
         int count = numSnakes.decrementAndGet();
-
+        //Metemos el hueco en la cola
         if (Tipo != Type.Lobby) {
-            Huecos.put(0);
+            Huecos.put(count);
         }
 
         if (count == 0) {
@@ -137,11 +147,16 @@ public class SnakeGame {
                 sb.append(getLocationsJson(snake));
                 sb.append(',');
             }
+            
+            //Actualizamos el estado de las frutas
             StringBuilder f = new StringBuilder();
             for (Fruit fruit : frutas) {
                 f.append(String.format("{\"x\": %d, \"y\": %d}", fruit.getPosition().x, fruit.getPosition().y));
                 f.append(",");
             }
+            
+            
+            //Dependiendo del tipo de partida se manda un tiempo u otro
             long Time = 0;
             switch (Tipo) {
                 case Classic:
@@ -159,19 +174,24 @@ public class SnakeGame {
             broadcast(msg);
             StringBuilder s = new StringBuilder();
             boolean ganada = false;
+            
+            
+            //Condiciones de victoria
             switch (Tipo) {
                 case Arcade:
 
                     for (Snake snake : getSnakes()) {
-                        if (snake.getTail().size() > 10) {
+                        //Enm arcade Ganamos cuendo nuestra serpiente supera los 15 d longitud
+                        if (snake.getTail().size() > 15) {
                             s.append("{\"id\": \"" + snake.getName() + "\",  \"win\": true");
                             s.append("},");
                             ganada = true;
-                            Long previLong = SnakeHandler.Puntuaciones.get(Tipo).putIfAbsent(snake.getName(), Tiempo);
+                            //Le damos por vencedor y Calculamos el tiempo que tardo en Hacerlo
+                            Long previLong = SnakeHandler.Puntuaciones.get(Tipo).putIfAbsent(snake.getName(), Tiempo / 1000);
 
                             if (null != previLong) {
-                                if (previLong > Tiempo) {
-                                    SnakeHandler.Puntuaciones.get(Tipo).put(snake.getName(), Tiempo);
+                                if (previLong > Tiempo / 1000) {
+                                    SnakeHandler.Puntuaciones.get(Tipo).put(snake.getName(), Tiempo / 1000);
                                 }
                             }
 
@@ -181,39 +201,27 @@ public class SnakeGame {
                         }
                     }
                     if (ganada) {
+                        //Si se ha ganado se manda el mensaje de Ganar a todos los jugadores
                         this.ganada.set(true);
                         s.deleteCharAt(s.length() - 1);
                         String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
+                        //Se guarda la puntuacion en el archivo. No pueden dos partidas escribitr en ela rchivo a la vez
                         synchronized (SnakeHandler.Puntuaciones.get(Tipo)) {
-                            try{
-                                File puntArcade = new File("src/main/resources/static/Arcade.json");
-                                FileWriter fw = new FileWriter(puntArcade);
-                                PrintWriter pw = new PrintWriter(fw);
-                                List<String> list = new LinkedList<>();
-                                
-                                for (String n : SnakeHandler.Puntuaciones.get(Tipo).keySet()) {
-                                    list.add(n + ":" + Puntuaciones.get(Tipo).get(n));
-                                }
-                                
-                                pw.print(SnakeHandler.JSON.toJson(list));
-                                
-                                fw.close();
-                                pw.close();
-                            }catch(FileNotFoundException ex){
-                                System.err.println("Archivo no encontrado");
-                            }
+                            SavePoints();
                         }
                         broadcast(Win);
-                        stopTimer(); 
+                        stopTimer();
                     }
 
                     break;
                 case Unlimited:
-
+                    //Unlimited solo acaba cuando no hay jugadores
                     break;
                 case Classic:
+                    //La condicion de clasimo es que hayan pasado 60 segundos. El primero con mas puntos gana
                     if (Tiempo > 60 * 1000) {
                         System.out.println("Terminada");
+                        //Coge las serpientes, las ordena y al primer jugador le da la victoria
                         List<Snake> list = new ArrayList<>(getSnakes());
                         list.sort((p1, p2) -> p2.getPoints() - p1.getPoints());
                         for (int i = 0; i < list.size(); i++) {
@@ -238,27 +246,13 @@ public class SnakeGame {
 
                         }
                         if (ganada) {
+                            // Al igual que antes guarda en el fichero todo y sincronizado
                             this.ganada.set(true);
                             s.deleteCharAt(s.length() - 1);
                             String Win = String.format("{\"type\":\"endGame\", \"data\" : [%s]}", s.toString());
+                           
                             synchronized (SnakeHandler.Puntuaciones.get(Tipo)) {
-                                try{
-                                File puntArcade = new File("src/main/resources/static/Classic.json");
-                                FileWriter fw = new FileWriter(puntArcade);
-                                PrintWriter pw = new PrintWriter(fw);
-                                List<String> list2 = new LinkedList<>();
-                                
-                                for (String n : SnakeHandler.Puntuaciones.get(Tipo).keySet()) {
-                                    list2.add(n + ":" + Puntuaciones.get(Tipo).get(name));
-                                }
-                                
-                                pw.print(SnakeHandler.JSON.toJson(list));
-                                
-                                fw.close();
-                                pw.close();
-                                }catch(FileNotFoundException ex){
-                                    System.err.println("Archivo no encontrado");
-                                }
+                                SavePoints();
                             }
                             broadcast(Win);
                             stopTimer();
@@ -357,4 +351,25 @@ public class SnakeGame {
         return Tipo;
     }
 
+    private void SavePoints() {
+        try {
+            File puntArcade = new File("data/"+Tipo.name()+".json");
+            FileWriter fw = new FileWriter(puntArcade);
+            PrintWriter pw = new PrintWriter(fw);
+            List<String> list = new LinkedList<>();
+
+            for (String n : SnakeHandler.Puntuaciones.get(Tipo).keySet()) {
+                list.add(n + ":" + Puntuaciones.get(Tipo).get(n));
+            }
+
+            pw.print(SnakeHandler.JSON.toJson(list));
+
+            fw.close();
+            pw.close();
+        } catch (FileNotFoundException ex) {
+            System.err.println("Archivo no encontrado");
+        } catch (IOException ex) {
+            Logger.getLogger(SnakeGame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 }

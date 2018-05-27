@@ -37,8 +37,8 @@ and open the template in the editor.
             var code = e.keyCode;
             if (code === 13) {
 
-                var name = $("#inputField").val();
-                var password = $("#inputPassword").val();
+                var name = $("#inputField").val().replace(/ /g, '');
+                var password = $("#inputPassword").val().replace(/ /g, '');
                 if (name === ""||password === "") {
                     window.alert("User empty or password empty");
                 } else {
@@ -48,7 +48,6 @@ and open the template in the editor.
                         url: "http://" + window.location.host + "/games/names/" + n,
                     })
                         .done(function (msg) {
-                            alert("Data Saved: " + msg);
                             if (msg === 1) {
                                 window.sessionStorage.setItem("name", name);
                                 window.location = "http://" + window.location.host + "/lobby.html";
@@ -65,8 +64,8 @@ and open the template in the editor.
             }
         })
         $("#Register").click(function () {
-            var name = $("#inputField").val();
-            var password = $("#inputPassword").val();
+            var name = $("#inputField").val().replace(/ /g, '');
+            var password = $("#inputPassword").val().replace(/ /g, '');
             if (name === ""||password === "") {
                 window.alert("User empty or empty");
             } else {
@@ -77,7 +76,6 @@ and open the template in the editor.
                     data: n
                 })
                     .done(function (msg) {
-                        alert("Data Saved: " + msg);
                         if (msg === 1) {
                             window.alert("User created");
                         } else {
@@ -90,8 +88,8 @@ and open the template in the editor.
             }
         })
         $("#Continue").click(function () {
-            var name = $("#inputField").val();
-            var password = $("#inputPassword").val();
+            var name = $("#inputField").val().replace(/ /g, '');
+            var password = $("#inputPassword").val().replace(/ /g, '');
             if (name === ""||password === "") {
                 window.alert("User empty or password empty");
             } else {
@@ -101,7 +99,6 @@ and open the template in the editor.
                     url: "http://" + window.location.host + "/games/names/" + n,
                 })
                     .done(function (msg) {
-                        alert("Data Saved: " + msg);
                         if (msg === 1) {
                             window.sessionStorage.setItem("name", name);
                             window.location = "http://" + window.location.host + "/lobby.html";
